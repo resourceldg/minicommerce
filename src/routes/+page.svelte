@@ -3,13 +3,16 @@
 	import { Search, ShoppingCart } from 'lucide-svelte';
 	import type { Furniture, CartItem, Category } from '$lib/types';
 	import Cart from '$lib/components/Cart.svelte';
+	import Checkout from '$lib/components/Checkout.svelte';
 	import CategoryScroll from '$lib/components/CategoryScroll.svelte';
 	import ProductGrid from '$lib/components/ProductGrid.svelte';
+	import { APP_CONFIG } from '$lib/config';
 
 	let furniture: Furniture[] = [];
 	let cart: CartItem[] = [];
 	let loading = true;
 	let showCart = false;
+	let showCheckout = false;
 	let selectedCategory = ''; // Cambiado de 'todos' a '' para mostrar todos por defecto
 	let searchQuery = '';
 	let searchOpen = false;
@@ -159,7 +162,8 @@
 			};
 			cart = [...cart, cartItem];
 		}
-		showCart = true;
+		// Ahora abrimos directamente el checkout en lugar del carrito
+		showCheckout = true;
 	}
 
 	function removeFromCart(index: number) {
@@ -176,6 +180,61 @@
 
 	function toggleCart() {
 		showCart = !showCart;
+	}
+
+	function toggleCheckout() {
+		showCheckout = !showCheckout;
+	}
+
+	function closeCheckout() {
+		showCheckout = false;
+	}
+
+	function updateQuantity(index: number, newQuantity: number) {
+		if (newQuantity < 1) return;
+		const updatedCart = [...cart];
+		updatedCart[index].quantity = newQuantity;
+		cart = updatedCart;
+	}
+
+	function removeItemFromCheckout(index: number) {
+		cart = cart.filter((_, i) => i !== index);
+	}
+
+	function buyNow() {
+		// Crear mensaje de WhatsApp con los productos del carrito
+		const message = createWhatsAppMessage();
+		const whatsappUrl = `https://wa.me/${APP_CONFIG.WHATSAPP_NUMBER.replace('+', '')}?text=${encodeURIComponent(message)}`;
+		
+		// Abrir WhatsApp en nueva ventana
+		window.open(whatsappUrl, '_blank');
+		
+		// Limpiar carrito después de enviar
+		cart = [];
+		showCheckout = false;
+	}
+
+	function createWhatsAppMessage(): string {
+		const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+		const formattedTotal = new Intl.NumberFormat('es-ES', {
+			style: 'currency',
+			currency: APP_CONFIG.DEFAULT_CURRENCY
+		}).format(total);
+
+		let message = `🛍️ *Nuevo Pedido - ${APP_CONFIG.STORE_NAME}*\n\n`;
+		message += `Hola! Me gustaría hacer un pedido:\n\n`;
+		
+		cart.forEach((item, index) => {
+			message += `${index + 1}. ${item.name}\n`;
+			message += `   Cantidad: ${item.quantity}\n`;
+			message += `   Precio: $${item.price}\n`;
+			message += `   Subtotal: $${item.price * item.quantity}\n\n`;
+		});
+		
+		message += `💰 *Total: ${formattedTotal}*\n\n`;
+		message += `Por favor, confirma disponibilidad y opciones de pago. ¡Gracias!`;
+
+		return message;
 	}
 
 	function getCartCount() {
@@ -233,7 +292,7 @@
 	<header class="main-header">
 		<div class="header-content">
 			<h1 class="brand-title">Rare&Magic</h1>
-			<button class="cart-button" on:click={toggleCart}>
+			<button class="cart-button" on:click={toggleCheckout}>
 				<ShoppingCart size={20} />
 				{#if getCartCount() > 0}
 					<span class="cart-count">{getCartCount()}</span>
@@ -291,6 +350,18 @@
 			{/if}
 		{/if}
 	</div>
+
+	<!-- Checkout Panel -->
+	{#if showCheckout}
+		<Checkout 
+			items={cart.map(item => ({ item, quantity: item.quantity }))}
+			isOpen={showCheckout}
+			on:close={closeCheckout}
+			on:update-quantity={({ detail }) => updateQuantity(detail.index, detail.quantity)}
+			on:remove-item={({ detail }) => removeItemFromCheckout(detail.index)}
+			on:buy-now={buyNow}
+		/>
+	{/if}
 
 	<!-- Cart Sidebar -->
 		{#if showCart}
@@ -360,7 +431,6 @@
 		font-weight: 400;
 		color: var(--color-text);
 		letter-spacing: 0.05em;
-		text-transform: uppercase;
 	}
 
 	.cart-button {

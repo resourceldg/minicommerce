@@ -56,6 +56,24 @@ export const config = {
 	}
 };
 
+// Configuración de la aplicación
+export const APP_CONFIG = {
+	// Número de WhatsApp para pedidos (formato internacional)
+	WHATSAPP_NUMBER: '+1234567890', // Cambiar por tu número real
+	
+	// Nombre de la tienda
+	STORE_NAME: 'Rare&Magic',
+	
+	// Moneda por defecto
+	DEFAULT_CURRENCY: 'USD',
+	
+	// Configuración de la API
+	API_BASE_URL: '/api',
+	
+	// Configuración de imágenes
+	IMAGE_PLACEHOLDER: '/images/placeholder.svg'
+};
+
 // Función helper para obtener la URL de WhatsApp
 export function getWhatsAppUrl(message: string): string {
 	return `https://wa.me/${config.whatsapp.number}?text=${encodeURIComponent(message)}`;
