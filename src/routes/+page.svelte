@@ -7,15 +7,24 @@
 	import CategoryScroll from '$lib/components/CategoryScroll.svelte';
 	import ProductGrid from '$lib/components/ProductGrid.svelte';
 	import { APP_CONFIG } from '$lib/config';
+	import { CHECKOUT_CONFIG } from '$lib/checkoutConfig';
+import { recommendationEngine } from '$lib/recommendationEngine';
 
 	let furniture: Furniture[] = [];
 	let cart: CartItem[] = [];
+	let cartCount = 0;
+	let cartLoaded = false; // Controlar cuándo se debe ejecutar la reactividad
 	let loading = true;
 	let showCart = false;
 	let showCheckout = false;
 	let selectedCategory = ''; // Cambiado de 'todos' a '' para mostrar todos por defecto
 	let searchQuery = '';
 	let searchOpen = false;
+
+	// Timer para cierre automático del carrito
+	let cartAutoCloseTimer: ReturnType<typeof setTimeout> | null = null;
+	let userActivityTimeout: ReturnType<typeof setTimeout> | null = null;
+	let lastUserActivity = Date.now();
 
 	// Categorías disponibles
 	const categories: Category[] = [
@@ -26,129 +35,240 @@
 		{ id: 'decoracion', name: 'Decoración', icon: '', active: false }
 	];
 
-	onMount(async () => {
-		console.log('onMount started');
-		try {
-			console.log('Fetching from API...');
-			const response = await fetch('/api/furniture');
-			console.log('API response:', response);
-			furniture = await response.json();
-			console.log('Furniture loaded:', furniture.length, 'items');
-		} catch (error) {
-			console.error('Error loading furniture:', error);
-			// Fallback data para desarrollo con imágenes de Pixabay
-			furniture = [
-				{
-					id: 1,
-					name: 'Silla Vintage de Madera',
-					description: 'Silla de madera restaurada con estilo vintage, perfecta para comedor o escritorio',
-					price: 150,
-					image: 'https://cdn.pixabay.com/photo/2017/08/27/10/16/interior-2685521_1280.jpg',
-					category: 'sillas'
-				},
-				{
-					id: 2,
-					name: 'Mesa de Centro Rústica',
-					description: 'Mesa de centro restaurada con patas torneadas y acabado en barniz natural',
-					price: 300,
-					image: 'https://cdn.pixabay.com/photo/2016/11/18/17/20/house-1835923_1280.jpg',
-					category: 'mesas'
-				},
-				{
-					id: 3,
-					name: 'Cómoda Clásica de Roble',
-					description: 'Cómoda de madera maciza restaurada con cajones funcionales y tiradores de latón',
-					price: 450,
-					image: 'https://cdn.pixabay.com/photo/2017/03/28/12/11/chairs-2181947_1280.jpg',
-					category: 'muebles'
-				},
-				{
-					id: 4,
-					name: 'Silla de Escritorio Ergonómica',
-					description: 'Silla de oficina restaurada con respaldo alto y asiento acolchado',
-					price: 200,
-					image: 'https://cdn.pixabay.com/photo/2016/11/18/17/20/living-room-1835923_1280.jpg',
-					category: 'sillas'
-				},
-				{
-					id: 5,
-					name: 'Mesa de Comedor Extensible',
-					description: 'Mesa de comedor de 6-8 personas con sistema extensible oculto',
-					price: 600,
-					image: 'https://cdn.pixabay.com/photo/2017/08/27/10/16/interior-2685521_1280.jpg',
-					category: 'mesas'
-				},
-				{
-					id: 6,
-					name: 'Armario de Pared Antiguo',
-					description: 'Armario empotrado restaurado con puertas correderas y estantes ajustables',
-					price: 800,
-					image: 'https://cdn.pixabay.com/photo/2016/11/18/17/20/house-1835923_1280.jpg',
-					category: 'muebles'
-				},
-				{
-					id: 7,
-					name: 'Silla de Jardín Adirondack',
-					description: 'Silla de jardín clásica restaurada, perfecta para terrazas y patios',
-					price: 180,
-					image: 'https://cdn.pixabay.com/photo/2017/03/28/12/11/chairs-2181947_1280.jpg',
-					category: 'sillas'
-				},
-				{
-					id: 8,
-					name: 'Mesa de Noche Artesanal',
-					description: 'Mesa de noche con cajón secreto y patas talladas a mano',
-					price: 250,
-					image: 'https://cdn.pixabay.com/photo/2016/11/18/17/20/living-room-1835923_1280.jpg',
-					category: 'muebles'
-				},
-				{
-					id: 9,
-					name: 'Silla de Lectura Chesterfield',
-					description: 'Silla de lectura restaurada con tapizado en cuero genuino y botones decorativos',
-					price: 350,
-					image: 'https://cdn.pixabay.com/photo/2017/08/27/10/16/interior-2685521_1280.jpg',
-					category: 'sillas'
-				},
-				{
-					id: 10,
-					name: 'Lámpara de Mesa Vintage',
-					description: 'Lámpara de mesa restaurada con pantalla de tela y base de latón',
-					price: 120,
-					image: 'https://cdn.pixabay.com/photo/2016/11/18/17/20/living-room-1835923_1280.jpg',
-					category: 'iluminacion'
-				},
-				{
-					id: 11,
-					name: 'Espejo Decorativo Antiguo',
-					description: 'Espejo de pared restaurado con marco tallado y acabado dorado',
-					price: 280,
-					image: 'https://cdn.pixabay.com/photo/2017/03/28/12/11/chairs-2181947_1280.jpg',
-					category: 'decoracion'
-				},
-				{
-					id: 12,
-					name: 'Estantería de Libros Rústica',
-					description: 'Estantería de madera maciza con diseño rústico y acabado natural',
-					price: 320,
-					image: 'https://cdn.pixabay.com/photo/2016/11/18/17/20/house-1835923_1280.jpg',
-					category: 'muebles'
-				}
-			];
-		} finally {
-			console.log('Setting loading to false');
-			loading = false;
+	// Función para detectar actividad del usuario
+	function updateUserActivity() {
+		lastUserActivity = Date.now();
+		// Resetear el timer si hay actividad
+		if (cartAutoCloseTimer) {
+			clearTimeout(cartAutoCloseTimer);
+			startCartAutoCloseTimer();
 		}
+	}
+
+	// Función para registrar comportamiento del usuario para recomendaciones
+	function recordUserBehavior(action: 'view' | 'add' | 'remove', product: Furniture) {
+		try {
+			switch (action) {
+				case 'view':
+					recommendationEngine.recordProductView(product.id.toString(), product.category);
+					break;
+				case 'add':
+					recommendationEngine.recordCartAddition(product.id.toString(), product.category);
+					break;
+				case 'remove':
+					recommendationEngine.recordCartRemoval(product.id.toString());
+					break;
+			}
+		} catch (error) {
+			console.warn('Error recording user behavior:', error);
+		}
+	}
+
+	// Función para iniciar el timer de cierre automático
+	function startCartAutoCloseTimer() {
+		if (cartAutoCloseTimer) {
+			clearTimeout(cartAutoCloseTimer);
+		}
+		cartAutoCloseTimer = setTimeout(() => {
+					// Solo cerrar si no hay actividad reciente
+		const timeSinceLastActivity = Date.now() - lastUserActivity;
+		if (timeSinceLastActivity >= CHECKOUT_CONFIG.UX.USER_ACTIVITY_THRESHOLD) {
+			showCheckout = false;
+			cartAutoCloseTimer = null;
+		} else {
+			// Si hubo actividad reciente, reiniciar el timer
+			startCartAutoCloseTimer();
+		}
+	}, CHECKOUT_CONFIG.UX.AUTO_CLOSE_DELAY);
+	}
+
+	// Función para limpiar timers
+	function clearCartTimers() {
+		if (cartAutoCloseTimer) {
+			clearTimeout(cartAutoCloseTimer);
+			cartAutoCloseTimer = null;
+		}
+		if (userActivityTimeout) {
+			clearTimeout(userActivityTimeout);
+			userActivityTimeout = null;
+		}
+	}
+
+	onMount(() => {
+		console.log('onMount started');
+		
+		// Cargar carrito desde localStorage
+		const savedCart = localStorage.getItem(CHECKOUT_CONFIG.STORAGE.CART_KEY);
+		if (savedCart) {
+			try {
+				const parsedCart = JSON.parse(savedCart);
+				// Forzar reactividad de Svelte usando spread operator
+				cart = [...parsedCart];
+				console.log('✅ Cart loaded from localStorage:', cart);
+			} catch (error) {
+				console.error('Error parsing saved cart:', error);
+				cart = [];
+			}
+		} else {
+			console.log('📭 No saved cart found in localStorage');
+		}
+		
+		// Inicializar cartCount después de cargar el carrito
+		cartCount = getCartCount();
+		console.log('🔍 After loading cart - cartCount initialized to:', cartCount);
+		
+		// Verificar que cartCount se haya calculado correctamente
+		console.log('🔍 After loading cart - cartCount should be:', cartCount);
+
+		// Agregar event listeners para detectar actividad del usuario
+		const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
+		activityEvents.forEach(event => {
+			document.addEventListener(event, updateUserActivity, { passive: true });
+		});
+
+		// Función async para cargar datos
+		async function loadFurniture() {
+			try {
+				console.log('Fetching from API...');
+				const response = await fetch('/api/furniture');
+				console.log('API response:', response);
+				furniture = await response.json();
+				console.log('Furniture loaded:', furniture.length, 'items');
+			} catch (error) {
+				console.error('Error loading furniture:', error);
+				// Fallback data para desarrollo con imágenes de Pixabay
+				furniture = [
+					{
+						id: 1,
+						name: 'Silla Vintage de Madera',
+						description: 'Silla de madera restaurada con estilo vintage, perfecta para comedor o escritorio',
+						price: 150,
+						image: 'https://cdn.pixabay.com/photo/2017/08/27/10/16/interior-2685521_1280.jpg',
+						category: 'sillas'
+					},
+					{
+						id: 2,
+						name: 'Mesa de Centro Rústica',
+						description: 'Mesa de centro restaurada con patas torneadas y acabado en barniz natural',
+						price: 300,
+						image: 'https://cdn.pixabay.com/photo/2016/11/18/17/20/house-1835923_1280.jpg',
+						category: 'mesas'
+					},
+					{
+						id: 3,
+						name: 'Cómoda Clásica de Roble',
+						description: 'Cómoda de madera maciza restaurada con cajones funcionales y tiradores de latón',
+						price: 450,
+						image: 'https://cdn.pixabay.com/photo/2017/03/28/12/11/chairs-2181947_1280.jpg',
+						category: 'muebles'
+					},
+					{
+						id: 4,
+						name: 'Silla de Escritorio Ergonómica',
+						description: 'Silla de oficina restaurada con respaldo alto y asiento acolchado',
+						price: 200,
+						image: 'https://cdn.pixabay.com/photo/2016/11/18/17/20/living-room-1835923_1280.jpg',
+						category: 'sillas'
+					},
+					{
+						id: 5,
+						name: 'Mesa de Comedor Extensible',
+						description: 'Mesa de comedor de 6-8 personas con sistema extensible oculto',
+						price: 600,
+						image: 'https://cdn.pixabay.com/photo/2017/08/27/10/16/interior-2685521_1280.jpg',
+						category: 'mesas'
+					},
+					{
+						id: 6,
+						name: 'Armario de Pared Antiguo',
+						description: 'Armario empotrado restaurado con puertas correderas y estantes ajustables',
+						price: 800,
+						image: 'https://cdn.pixabay.com/photo/2016/11/18/17/20/house-1835923_1280.jpg',
+						category: 'muebles'
+					},
+					{
+						id: 7,
+						name: 'Silla de Jardín Adirondack',
+						description: 'Silla de jardín clásica restaurada, perfecta para terrazas y patios',
+						price: 180,
+						image: 'https://cdn.pixabay.com/photo/2017/03/28/12/11/chairs-2181947_1280.jpg',
+						category: 'sillas'
+					},
+					{
+						id: 8,
+						name: 'Mesa de Noche Artesanal',
+						description: 'Mesa de noche con cajón secreto y patas talladas a mano',
+						price: 250,
+						image: 'https://cdn.pixabay.com/photo/2017/03/28/12/11/chairs-2181947_1280.jpg',
+						category: 'muebles'
+					},
+					{
+						id: 9,
+						name: 'Silla de Lectura Chesterfield',
+						description: 'Silla de lectura restaurada con tapizado en cuero genuino y botones decorativos',
+						price: 350,
+						image: 'https://cdn.pixabay.com/photo/2017/08/27/10/16/interior-2685521_1280.jpg',
+						category: 'sillas'
+					},
+					{
+						id: 10,
+						name: 'Lámpara de Mesa Vintage',
+						description: 'Lámpara de mesa restaurada con pantalla de tela y base de latón',
+						price: 120,
+						image: 'https://cdn.pixabay.com/photo/2017/03/28/12/11/chairs-2181947_1280.jpg',
+						category: 'iluminacion'
+					},
+					{
+						id: 11,
+						name: 'Espejo Decorativo Antiguo',
+						description: 'Espejo de pared restaurado con marco tallado y acabado dorado',
+						price: 280,
+						image: 'https://cdn.pixabay.com/photo/2017/03/28/12/11/chairs-2181947_1280.jpg',
+						category: 'decoracion'
+					},
+					{
+						id: 12,
+						name: 'Estantería de Libros Rústica',
+						description: 'Estantería de madera maciza con diseño rústico y acabado natural',
+						price: 320,
+						image: 'https://cdn.pixabay.com/photo/2017/03/28/12/11/chairs-2181947_1280.jpg',
+						category: 'muebles'
+					}
+				];
+			} finally {
+				console.log('Setting loading to false');
+				loading = false;
+				cartLoaded = true; // Marcar que el carrito está cargado
+			}
+		}
+
+		// Ejecutar la carga de datos
+		loadFurniture();
+
+		// Cleanup function
+		return () => {
+			clearCartTimers();
+			activityEvents.forEach(event => {
+				document.removeEventListener(event, updateUserActivity);
+			});
+		};
 	});
 
 	function addToCart(item: Furniture) {
+		console.log('➕ Adding to cart:', item.name, 'Current cart:', cart);
+		console.log('🔄 Before update - cartCount:', cartCount);
+		
 		const existingItemIndex = cart.findIndex(cartItem => cartItem.id === item.id);
 		
 		if (existingItemIndex >= 0) {
 			// Si ya existe, aumentar cantidad
-			const updatedCart = [...cart];
-			updatedCart[existingItemIndex].quantity += 1;
-			cart = updatedCart;
+			cart = cart.map((cartItem, index) => {
+				if (index === existingItemIndex) {
+					return { ...cartItem, quantity: cartItem.quantity + 1 };
+				}
+				return cartItem;
+			});
+			console.log('✅ Updated existing item quantity. New cart:', cart);
 		} else {
 			// Si no existe, agregar nuevo item
 			const cartItem: CartItem = {
@@ -161,21 +281,74 @@
 				quantity: 1
 			};
 			cart = [...cart, cartItem];
+			console.log('✅ Added new item to cart. New cart:', cart);
 		}
-		// Ahora abrimos directamente el checkout en lugar del carrito
+		
+		console.log('🔄 After update - cartCount should be:', getCartCount());
+		
+		// Registrar comportamiento para recomendaciones
+		recordUserBehavior('add', item);
+		
+		// Guardar en localStorage
+		saveCartToStorage();
+		
+		// Debug: verificar cartCount después de guardar
+		console.log('🔍 After saveCartToStorage - cartCount:', cartCount, 'cart:', cart);
+		
+		// Forzar actualización inmediata de cartCount
+		cartCount = getCartCount();
+		console.log('🔧 Forced cartCount update:', cartCount);
+		
+		// Abrir checkout y iniciar timer de cierre automático
 		showCheckout = true;
+		startCartAutoCloseTimer();
+	}
+
+	function addRecommendation(product: Furniture) {
+		addToCart(product);
+	}
+
+	function saveCartToStorage() {
+		try {
+			localStorage.setItem(CHECKOUT_CONFIG.STORAGE.CART_KEY, JSON.stringify(cart));
+		} catch (error) {
+			console.error('Error saving cart to storage:', error);
+		}
 	}
 
 	function removeFromCart(index: number) {
+		const removedItem = cart[index];
+		if (removedItem) {
+			// Registrar comportamiento para recomendaciones
+			recordUserBehavior('remove', {
+				id: removedItem.id,
+				name: removedItem.name,
+				description: removedItem.description,
+				price: removedItem.price,
+				image: removedItem.image,
+				category: removedItem.category
+			} as Furniture);
+		}
 		cart = cart.filter((_, i) => i !== index);
+		saveCartToStorage();
+		
+		// Forzar actualización inmediata de cartCount
+		cartCount = getCartCount();
+		console.log('🔧 After removeFromCart - cartCount updated:', cartCount);
 	}
 
 	function updateCart(updatedCart: CartItem[]) {
 		cart = updatedCart;
+		saveCartToStorage();
 	}
 
 	function clearCart() {
 		cart = [];
+		saveCartToStorage();
+		
+		// Forzar actualización inmediata de cartCount
+		cartCount = getCartCount();
+		console.log('🔧 After clearCart - cartCount updated:', cartCount);
 	}
 
 	function toggleCart() {
@@ -184,21 +357,42 @@
 
 	function toggleCheckout() {
 		showCheckout = !showCheckout;
+		if (showCheckout) {
+			// Si se abre manualmente, iniciar timer
+			startCartAutoCloseTimer();
+		} else {
+			// Si se cierra manualmente, limpiar timer
+			clearCartTimers();
+		}
 	}
 
 	function closeCheckout() {
 		showCheckout = false;
+		clearCartTimers();
 	}
 
 	function updateQuantity(index: number, newQuantity: number) {
 		if (newQuantity < 1) return;
-		const updatedCart = [...cart];
-		updatedCart[index].quantity = newQuantity;
-		cart = updatedCart;
+		cart = cart.map((cartItem, i) => {
+			if (i === index) {
+				return { ...cartItem, quantity: newQuantity };
+			}
+			return cartItem;
+		});
+		saveCartToStorage();
+		
+		// Forzar actualización inmediata de cartCount
+		cartCount = getCartCount();
+		console.log('🔧 After updateQuantity - cartCount updated:', cartCount);
 	}
 
 	function removeItemFromCheckout(index: number) {
 		cart = cart.filter((_, i) => i !== index);
+		saveCartToStorage();
+		
+		// Forzar actualización inmediata de cartCount
+		cartCount = getCartCount();
+		console.log('🔧 After removeItemFromCheckout - cartCount updated:', cartCount);
 	}
 
 	function buyNow() {
@@ -209,9 +403,14 @@
 		// Abrir WhatsApp en nueva ventana
 		window.open(whatsappUrl, '_blank');
 		
+		// Registrar compra completada para recomendaciones
+		const productIds = cart.map(item => item.id.toString());
+		recommendationEngine.recordPurchase(productIds);
+		
 		// Limpiar carrito después de enviar
 		cart = [];
 		showCheckout = false;
+		saveCartToStorage();
 	}
 
 	function createWhatsAppMessage(): string {
@@ -239,6 +438,12 @@
 
 	function getCartCount() {
 		return cart.reduce((sum, item) => sum + item.quantity, 0);
+	}
+
+	// Hacer que getCartCount sea reactiva solo cuando el carrito esté cargado
+	$: if (cartLoaded) {
+		cartCount = getCartCount();
+		console.log('🔄 Reactivity triggered - cartCount:', cartCount, 'cart.length:', cart.length, 'cart items:', cart);
 	}
 
 	function selectCategory(categoryId: string) {
@@ -294,8 +499,11 @@
 			<h1 class="brand-title">Rare&Magic</h1>
 			<button class="cart-button" on:click={toggleCheckout}>
 				<ShoppingCart size={20} />
-				{#if getCartCount() > 0}
-					<span class="cart-count">{getCartCount()}</span>
+				<!-- Debug: cartCount = {cartCount}, cart.length = {cart.length} -->
+				{#if cartCount > 0}
+					<span class="cart-count">{cartCount}</span>
+					<!-- Debug info -->
+					<!-- cartCount: {cartCount}, cart.length: {cart.length} -->
 				{/if}
 			</button>
 		</div>
@@ -360,6 +568,7 @@
 			on:update-quantity={({ detail }) => updateQuantity(detail.index, detail.quantity)}
 			on:remove-item={({ detail }) => removeItemFromCheckout(detail.index)}
 			on:buy-now={buyNow}
+			on:add-recommendation={({ detail }) => addRecommendation(detail)}
 		/>
 	{/if}
 

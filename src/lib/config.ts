@@ -74,14 +74,14 @@ export const APP_CONFIG = {
 	IMAGE_PLACEHOLDER: '/images/placeholder.svg'
 };
 
-// Configuración de la base de datos
+// Configuración de la base de datos (solo para servidor)
 export const DB_CONFIG = {
 	// Variables de entorno para PostgreSQL
-	POSTGRES_URL: process.env.POSTGRES_URL || '',
-	POSTGRES_HOST: process.env.POSTGRES_HOST || '',
-	POSTGRES_DATABASE: process.env.POSTGRES_DATABASE || '',
-	POSTGRES_USERNAME: process.env.POSTGRES_USERNAME || '',
-	POSTGRES_PASSWORD: process.env.POSTGRES_PASSWORD || '',
+	POSTGRES_URL: getEnvVar('POSTGRES_URL'),
+	POSTGRES_HOST: getEnvVar('POSTGRES_HOST'),
+	POSTGRES_DATABASE: getEnvVar('POSTGRES_DATABASE'),
+	POSTGRES_USERNAME: getEnvVar('POSTGRES_USERNAME'),
+	POSTGRES_PASSWORD: getEnvVar('POSTGRES_PASSWORD'),
 	
 	// Verificar si tenemos configuración de base de datos
 	hasDatabaseConfig() {
@@ -90,9 +90,24 @@ export const DB_CONFIG = {
 	
 	// Verificar si estamos en desarrollo local
 	isDevelopment() {
-		return process.env.NODE_ENV === 'development';
+		return getEnvVar('NODE_ENV') === 'development';
 	}
 };
+
+// Función helper para obtener variables de entorno de forma segura
+function getEnvVar(key: string): string {
+	// En el navegador, usar import.meta.env (Vite)
+	if (typeof window !== 'undefined') {
+		return import.meta.env[key] || '';
+	}
+	
+	// En el servidor, usar process.env
+	if (typeof process !== 'undefined' && process.env) {
+		return process.env[key] || '';
+	}
+	
+	return '';
+}
 
 // Función helper para obtener la URL de WhatsApp
 export function getWhatsAppUrl(message: string): string {

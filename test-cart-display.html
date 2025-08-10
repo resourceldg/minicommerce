@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Cart Display</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid #ddd;
+        }
+        .brand-title {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .cart-button {
+            background: none;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+        .cart-button:hover {
+            background: #f0f0f0;
+        }
+        .cart-count {
+            position: absolute;
+            top: -6px;
+            right: -6px;
+            background: #4CAF50;
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 400;
+            padding: 3px 8px;
+            border-radius: 12px;
+            min-width: 20px;
+            text-align: center;
+        }
+        .debug-info {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            font-family: monospace;
+        }
+        .product {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .add-btn {
+            background: #2196F3;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        .clear-btn {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Test Display del Contador del Carrito</h1>
+    
+    <div class="header">
+        <h1 class="brand-title">Rare&Magic</h1>
+        <button class="cart-button" onclick="showCart()">
+            🛒 Carrito
+            <span id="cart-count" class="cart-count" style="display: none;">0</span>
+        </button>
+    </div>
+
+    <div class="debug-info">
+        <h3>🔍 Debug Info</h3>
+        <p>Estado del carrito: <span id="cart-state">[]</span></p>
+        <p>Total de items: <span id="cart-total">0</span></p>
+        <p>cartCount: <span id="cart-count-display">0</span></p>
+        <p>Contador visible: <span id="counter-visible">No</span></p>
+    </div>
+
+    <h2>📦 Productos de Prueba</h2>
+    
+    <div class="product">
+        <h3>Silla Vintage</h3>
+        <p>Precio: $150</p>
+        <button class="add-btn" onclick="addToCart(1, 'Silla Vintage', 150)">Agregar al Carrito</button>
+    </div>
+
+    <div class="product">
+        <h3>Mesa de Centro</h3>
+        <p>Precio: $300</p>
+        <button class="add-btn" onclick="addToCart(2, 'Mesa de Centro', 300)">Agregar al Carrito</button>
+    </div>
+
+    <div class="product">
+        <h3>Cómoda Clásica</h3>
+        <p>Precio: $450</p>
+        <button class="add-btn" onclick="addToCart(3, 'Cómoda Clásica', 450)">Agregar al Carrito</button>
+    </div>
+
+    <button onclick="clearCart()" class="clear-btn">
+        🗑️ Limpiar Carrito
+    </button>
+
+    <script>
+        // Estado del carrito
+        let cart = [];
+        let cartCount = 0;
+
+        // Función para actualizar el display
+        function updateDisplay() {
+            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+            cartCount = totalItems;
+            
+            // Actualizar debug info
+            document.getElementById('cart-state').textContent = JSON.stringify(cart, null, 2);
+            document.getElementById('cart-total').textContent = totalItems;
+            document.getElementById('cart-count-display').textContent = cartCount;
+            
+            // Actualizar contador del carrito
+            const cartCountElement = document.getElementById('cart-count');
+            if (totalItems > 0) {
+                cartCountElement.textContent = totalItems;
+                cartCountElement.style.display = 'block';
+                document.getElementById('counter-visible').textContent = 'Sí';
+                console.log('✅ Contador visible con valor:', totalItems);
+            } else {
+                cartCountElement.style.display = 'none';
+                document.getElementById('counter-visible').textContent = 'No';
+                console.log('❌ Contador oculto');
+            }
+            
+            console.log('🔄 Display actualizado - cartCount:', cartCount, 'totalItems:', totalItems);
+        }
+
+        // Agregar al carrito
+        function addToCart(id, name, price) {
+            console.log('➕ Adding to cart:', name);
+            console.log('🔄 Before update - cartCount:', cartCount);
+            
+            const existingItemIndex = cart.findIndex(item => item.id === id);
+            
+            if (existingItemIndex >= 0) {
+                cart = cart.map((item, index) => {
+                    if (index === existingItemIndex) {
+                        return { ...item, quantity: item.quantity + 1 };
+                    }
+                    return item;
+                });
+                console.log('✅ Updated existing item quantity');
+            } else {
+                cart.push({
+                    id: id,
+                    name: name,
+                    price: price,
+                    quantity: 1
+                });
+                console.log('✅ Added new item to cart');
+            }
+            
+            console.log('🔄 After update - cartCount should be:', cart.reduce((sum, item) => sum + item.quantity, 0));
+            console.log('Current cart:', cart);
+            
+            updateDisplay();
+        }
+
+        // Limpiar carrito
+        function clearCart() {
+            console.log('🗑️ Clearing cart');
+            cart = [];
+            updateDisplay();
+        }
+
+        // Mostrar carrito
+        function showCart() {
+            if (cart.length === 0) {
+                alert('El carrito está vacío');
+            } else {
+                let message = 'Productos en el carrito:\n\n';
+                cart.forEach(item => {
+                    message += `${item.name} - Cantidad: ${item.quantity} - Precio: $${item.price}\n`;
+                });
+                message += `\nTotal: $${cart.reduce((sum, item) => sum + (item.price * item.quantity), 0)}`;
+                alert(message);
+            }
+        }
+
+        // Inicializar
+        updateDisplay();
+        console.log('🚀 Test cart display loaded. Current cart:', cart);
+    </script>
+</body>
+</html> 
