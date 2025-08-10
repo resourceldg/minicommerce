@@ -1,10 +1,10 @@
 {
   "version": 2,
   "env": {
-    "POSTGRES_URL": "@postgres_url",
-    "POSTGRES_HOST": "@postgres_host",
-    "POSTGRES_DATABASE": "@postgres_database",
-    "POSTGRES_USERNAME": "@postgres_username",
-    "POSTGRES_PASSWORD": "@postgres_password"
+    "POSTGRES_URL": "${POSTGRES_URL}",
+    "POSTGRES_HOST": "${POSTGRES_HOST}",
+    "POSTGRES_DATABASE": "${POSTGRES_DATABASE}",
+    "POSTGRES_USERNAME": "${POSTGRES_USERNAME}",
+    "POSTGRES_PASSWORD": "${POSTGRES_PASSWORD}"
   }
 } 
