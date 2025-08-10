@@ -1,22 +1,17 @@
 import { json } from '@sveltejs/kit';
-import type { RequestHandler } from '@sveltejs/kit';
-import { sql } from '@vercel/postgres';
+import { db } from '$lib/db';
 
-export const GET: RequestHandler = async () => {
+export async function GET() {
 	try {
-		// Intentar obtener datos desde PostgreSQL
-		const { rows } = await sql`
-			SELECT id, name, description, price, image, category
-			FROM furniture
-			ORDER BY id ASC
-		`;
-
-		console.log('✅ Datos obtenidos de PostgreSQL:', rows.length, 'elementos');
-		return json(rows);
-	} catch (error) {
-		console.error('❌ Error de base de datos:', error);
+		// Usar el nuevo sistema híbrido
+		const furniture = await db.getFurniture();
 		
-		// Fallback data en caso de error
+		console.log('✅ Datos obtenidos:', furniture.length, 'elementos');
+		return json(furniture);
+	} catch (error) {
+		console.error('❌ Error obteniendo datos:', error);
+		
+		// En caso de error, usar datos de fallback
 		const fallbackData = [
 			{
 				id: 1,
@@ -100,7 +95,7 @@ export const GET: RequestHandler = async () => {
 			}
 		];
 
-		console.log('⚠️ Usando datos de fallback debido al error de DB');
+		console.log('⚠️ Usando datos de fallback debido al error');
 		return json(fallbackData);
 	}
 }; 

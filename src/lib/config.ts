@@ -74,6 +74,26 @@ export const APP_CONFIG = {
 	IMAGE_PLACEHOLDER: '/images/placeholder.svg'
 };
 
+// Configuración de la base de datos
+export const DB_CONFIG = {
+	// Variables de entorno para PostgreSQL
+	POSTGRES_URL: process.env.POSTGRES_URL || '',
+	POSTGRES_HOST: process.env.POSTGRES_HOST || '',
+	POSTGRES_DATABASE: process.env.POSTGRES_DATABASE || '',
+	POSTGRES_USERNAME: process.env.POSTGRES_USERNAME || '',
+	POSTGRES_PASSWORD: process.env.POSTGRES_PASSWORD || '',
+	
+	// Verificar si tenemos configuración de base de datos
+	hasDatabaseConfig() {
+		return !!(this.POSTGRES_URL || (this.POSTGRES_HOST && this.POSTGRES_DATABASE && this.POSTGRES_USERNAME && this.POSTGRES_PASSWORD));
+	},
+	
+	// Verificar si estamos en desarrollo local
+	isDevelopment() {
+		return process.env.NODE_ENV === 'development';
+	}
+};
+
 // Función helper para obtener la URL de WhatsApp
 export function getWhatsAppUrl(message: string): string {
 	return `https://wa.me/${config.whatsapp.number}?text=${encodeURIComponent(message)}`;
