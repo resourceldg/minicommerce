@@ -245,7 +245,7 @@
 	<!-- Descripción zen -->
 	<div class="zen-description">
 		<div class="description-container">
-			<p class="brand-mission">Artefactos mágicos, piezas únicas. Legado consciente.</p>
+			<p class="brand-mission">Muebles únicos, legado consciente</p>
 		</div>
 	</div>
 
