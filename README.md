@@ -21,13 +21,12 @@ En **RareandMagic**, fusionamos el arte y la sostenibilidad para crear artefacto
 - **Framework**: SvelteKit
 - **Build Command**: `npm run build`
 - **Output Directory**: `.svelte-kit/static`
-- **Domain**: `rareandmagic.space`
 
 ### **Pasos para Desplegar:**
 1. Conecta tu repositorio de GitHub a Vercel
 2. Vercel detectará automáticamente SvelteKit
-3. Configura el dominio personalizado `rareandmagic.space`
-4. ¡Deploy automático en cada push!
+3. ¡Deploy automático en cada push!
+4. **Opcional**: Configura el dominio personalizado después del deploy
 
 ## 🛠️ **Desarrollo Local**
 
