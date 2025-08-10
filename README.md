@@ -69,3 +69,4 @@ npm run preview
 
 **RareandMagic** - Donde el arte se encuentra con la sostenibilidad ✨
 # Test deploy
+# Trigger redeploy
