@@ -1,112 +1,71 @@
-# 🪑 Muebles Restaurados - Instagram Shopping Style
+# 🎨 RareandMagic - Artefactos Únicos de Diseño Consciente
 
-Una tienda de muebles restaurados con diseño inspirado en Instagram Shopping, construida con SvelteKit.
+> Transformamos espacios en hogares y empresas con arte y diseño consciente. Cada pieza cuenta una historia única.
 
-## ✨ Características
+## 🌟 **Nuestra Misión**
 
-- 🎨 **Diseño elegante** inspirado en Instagram Shopping
-- 🔍 **Búsqueda y filtrado** por categorías
-- 🛒 **Carrito de compras** funcional
-- ❤️ **Sistema de favoritos**
-- 📱 **Diseño responsive** para móvil y desktop
-- 🖼️ **Grid de productos** con precios superpuestos
-- 🏷️ **Categorías con scroll horizontal**
+En **RareandMagic**, fusionamos el arte y la sostenibilidad para crear artefactos de diseño verdaderamente únicos. Nuestra pasión es dar nueva vida a piezas antiguas y madera reutilizada, transformándose en tesoros modernos que cuentan historias.
 
-## 🚀 Deployment en Vercel
+## 🏗️ **Características de la Tienda**
 
-### 1. Preparar el repositorio
+- **🛍️ Experiencia Instagram Shopping**: Diseño inspirado en Instagram Shopping con scroll horizontal infinito
+- **🏷️ Etiquetas de Precio**: Precios visibles directamente en las fotos de los productos
+- **🔍 Búsqueda Inteligente**: Filtrado por categorías y búsqueda en tiempo real
+- **🛒 Carrito de Compras**: Sistema completo de gestión de compras
+- **❤️ Sistema de Favoritos**: Guarda tus piezas favoritas
+- **📱 Diseño Responsivo**: Funciona perfectamente en todos los dispositivos
 
-```bash
-# Clonar el repositorio
-git clone <tu-repo-url>
-cd minicommerce
+## 🚀 **Despliegue en Vercel**
 
-# Instalar dependencias
-npm install
+### **Configuración Automática:**
+- **Framework**: SvelteKit
+- **Build Command**: `npm run build`
+- **Output Directory**: `.svelte-kit/static`
+- **Domain**: `rareandmagic.space`
 
-# Verificar que funciona localmente
-npm run dev
-```
+### **Pasos para Desplegar:**
+1. Conecta tu repositorio de GitHub a Vercel
+2. Vercel detectará automáticamente SvelteKit
+3. Configura el dominio personalizado `rareandmagic.space`
+4. ¡Deploy automático en cada push!
 
-### 2. Conectar con Vercel
-
-1. **Crear cuenta en [Vercel](https://vercel.com)**
-2. **Importar el repositorio** desde GitHub/GitLab
-3. **Vercel detectará automáticamente** que es un proyecto SvelteKit
-4. **Configuración automática** con el `vercel.json`
-
-### 3. Variables de entorno (opcional)
-
-Si quieres conectar una base de datos PostgreSQL:
-
-```bash
-# En Vercel Dashboard → Settings → Environment Variables
-POSTGRES_URL=tu_url_de_postgres
-```
-
-### 4. Deployment automático
-
-- **Cada push a `main`** se desplegará automáticamente
-- **Preview deployments** para cada pull request
-- **Rollback** a versiones anteriores si algo falla
-
-## 🛠️ Desarrollo local
+## 🛠️ **Desarrollo Local**
 
 ```bash
 # Instalar dependencias
 npm install
 
-# Ejecutar en modo desarrollo
+# Servidor de desarrollo
 npm run dev
 
-# Build para producción
+# Construir para producción
 npm run build
 
-# Preview del build
+# Vista previa de producción
 npm run preview
 ```
 
-## 📁 Estructura del proyecto
-
-```
-src/
-├── lib/
-│   ├── components/          # Componentes reutilizables
-│   │   ├── Cart.svelte     # Carrito de compras
-│   │   ├── ProductGrid.svelte # Grid de productos
-│   │   └── CategoryScroll.svelte # Scroll de categorías
-│   ├── types.ts            # Tipos TypeScript
-│   └── config.ts           # Configuración
-├── routes/
-│   ├── +page.svelte        # Página principal
-│   ├── +layout.svelte      # Layout principal
-│   └── api/
-│       └── furniture/      # API de muebles
-└── app.html                # Template HTML
-```
-
-## 🎯 Próximas mejoras
-
-- [ ] **Sistema de favoritos** completo
-- [ ] **Vista detallada** de productos
-- [ ] **Integración con WhatsApp** para pedidos
-- [ ] **Más filtros** (precio, material, estilo)
-- [ ] **Animaciones** y transiciones suaves
-- [ ] **PWA** (Progressive Web App)
-
-## 🌟 Tecnologías
+## 🎨 **Tecnologías Utilizadas**
 
 - **Frontend**: SvelteKit + TypeScript
-- **Styling**: CSS Variables + Responsive Design
-- **Icons**: Lucide Svelte
-- **Images**: Pexels API (gratuita)
+- **Estilos**: CSS moderno con variables CSS
+- **Iconos**: Lucide Svelte
+- **Imágenes**: Pexels API (gratuita)
 - **Deployment**: Vercel
-- **Database**: PostgreSQL (opcional)
 
-## 📱 Demo
+## 🌍 **Nuestro Compromiso**
 
-Visita la aplicación desplegada en: [tu-url-de-vercel.vercel.app](https://tu-url-de-vercel.vercel.app)
+- **Sostenibilidad**: Madera reutilizada y restaurada
+- **Exclusividad**: Cada pieza es única y artesanal
+- **Calidad**: Compromiso inquebrantable con la excelencia
+- **Conciencia**: Diseño que respeta el medio ambiente
+
+## 📞 **Contacto**
+
+- **Website**: [rareandmagic.space](https://rareandmagic.space)
+- **Instagram**: [@rareandmagic](https://instagram.com/rareandmagic)
+- **Email**: info@rareandmagic.space
 
 ---
 
-**¿Te gusta el proyecto?** ⭐ ¡Dale una estrella al repositorio!
+**RareandMagic** - Donde el arte se encuentra con la sostenibilidad ✨

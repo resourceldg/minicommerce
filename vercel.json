@@ -18,5 +18,13 @@
       "src": "/(.*)",
       "dest": "/$1"
     }
+  ],
+  "domains": ["rareandmagic.space"],
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/",
+      "permanent": true
+    }
   ]
 } 

@@ -228,100 +228,151 @@
 </script>
 
 <svelte:head>
-	<title>Muebles Restaurados - Instagram Shopping</title>
-	<meta name="description" content="Muebles restaurados únicos y artesanales" />
+	<title>RareandMagic - Artefactos Únicos de Diseño Consciente</title>
+	<meta name="description" content="Transformamos espacios con arte y diseño consciente. Piezas únicas y sostenibles creadas con madera reutilizada y restaurada." />
 </svelte:head>
 
-<!-- Header estilo Instagram -->
-<header class="header">
-	<div class="header-content">
-		<div class="logo">
-			<h1>Muebles Restaurados</h1>
+	<!-- Header de RareandMagic -->
+	<header class="brand-header">
+		<div class="brand-content">
+			<h1 class="brand-title">RareandMagic</h1>
+			<p class="brand-tagline">Artefactos Únicos de Diseño Consciente</p>
+			<p class="brand-mission">Transformamos espacios en hogares y empresas con arte y diseño consciente. Cada pieza cuenta una historia única.</p>
 		</div>
-		
-		<div class="header-actions">
-			<button class="cart-button" on:click={toggleCart}>
-				<ShoppingCart size={24} />
-				<span class="cart-count">{getCartCount()}</span>
-			</button>
+	</header>
+
+	<!-- Barra de búsqueda y filtros -->
+	<div class="search-section">
+		<!-- Header estilo Instagram -->
+		<header class="header">
+			<div class="header-content">
+				<div class="logo">
+					<h1>RareandMagic</h1>
+				</div>
+				
+				<div class="header-actions">
+					<button class="cart-button" on:click={toggleCart}>
+						<ShoppingCart size={24} />
+						<span class="cart-count">{getCartCount()}</span>
+					</button>
+				</div>
+			</div>
+		</header>
+
+			<!-- Main Content -->
+	<div class="main-content">
+			{#if loading}
+				<div class="loading-container">
+					<div class="loading-spinner"></div>
+					<p>Cargando artefactos únicos...</p>
+				</div>
+			{:else}
+				<!-- Barra de búsqueda -->
+				<div class="search-container">
+					<div class="search-input-wrapper">
+						<Search size={20} />
+						<input 
+							type="text" 
+							placeholder="Buscar artefactos únicos..." 
+							bind:value={searchQuery}
+							class="search-input"
+						/>
+					</div>
+				</div>
+
+				<!-- Categorías con scroll horizontal -->
+				<CategoryScroll 
+					{categories} 
+					on:select={({ detail }) => selectCategory(detail)}
+				/>
+
+				<!-- Resultados de búsqueda -->
+				{#if searchQuery.trim()}
+					<div class="search-results">
+						<p>Resultados para "{searchQuery}" ({filteredFurniture.length} artefactos)</p>
+					</div>
+				{/if}
+
+				<!-- Grid de productos estilo Instagram -->
+				{#if filteredFurniture.length > 0}
+					<ProductGrid 
+						products={filteredFurniture}
+						on:add-to-cart={({ detail }) => addToCart(detail)}
+						on:toggle-favorite={({ detail }) => toggleFavorite(detail)}
+					/>
+				{:else}
+					<div class="no-results">
+						<p>No se encontraron artefactos que coincidan con tu búsqueda.</p>
+						<button class="btn btn-outline" on:click={() => { searchQuery = ''; selectCategory('todos'); }}>
+							Ver todos los artefactos
+						</button>
+					</div>
+				{/if}
+			{/if}
 		</div>
 	</div>
-</header>
 
-<!-- Main Content -->
-<main class="main-content">
-	{#if loading}
-		<div class="loading-container">
-			<div class="loading-spinner"></div>
-			<p>Cargando muebles...</p>
-		</div>
-	{:else}
-		<!-- Barra de búsqueda -->
-		<div class="search-container">
-			<div class="search-input-wrapper">
-				<Search size={20} />
-				<input 
-					type="text" 
-					placeholder="Buscar muebles..." 
-					bind:value={searchQuery}
-					class="search-input"
+	<!-- Cart Sidebar -->
+		{#if showCart}
+			<div 
+				class="cart-overlay" 
+				on:click={toggleCart}
+				on:keydown={(e) => e.key === 'Escape' && toggleCart()}
+				role="button"
+				tabindex="0"
+				aria-label="Cerrar carrito"
+			></div>
+			<div class="cart-sidebar slide-in">
+				<Cart 
+					{cart} 
+					on:remove-item={({ detail }) => removeFromCart(detail)}
+					on:update-cart={({ detail }) => updateCart(detail)}
+					on:clear-cart={clearCart}
+					on:close={toggleCart}
 				/>
 			</div>
-		</div>
-
-		<!-- Categorías con scroll horizontal -->
-		<CategoryScroll 
-			{categories} 
-			on:select={({ detail }) => selectCategory(detail)}
-		/>
-
-		<!-- Resultados de búsqueda -->
-		{#if searchQuery.trim()}
-			<div class="search-results">
-				<p>Resultados para "{searchQuery}" ({filteredFurniture.length} productos)</p>
-			</div>
 		{/if}
-
-		<!-- Grid de productos estilo Instagram -->
-		{#if filteredFurniture.length > 0}
-			<ProductGrid 
-				products={filteredFurniture}
-				on:add-to-cart={({ detail }) => addToCart(detail)}
-				on:toggle-favorite={({ detail }) => toggleFavorite(detail)}
-			/>
-		{:else}
-			<div class="no-results">
-				<p>No se encontraron productos que coincidan con tu búsqueda.</p>
-				<button class="btn btn-outline" on:click={() => { searchQuery = ''; selectCategory('todos'); }}>
-					Ver todos los productos
-				</button>
-			</div>
-		{/if}
-	{/if}
-</main>
-
-<!-- Cart Sidebar -->
-{#if showCart}
-	<div 
-		class="cart-overlay" 
-		on:click={toggleCart}
-		on:keydown={(e) => e.key === 'Escape' && toggleCart()}
-		role="button"
-		tabindex="0"
-		aria-label="Cerrar carrito"
-	></div>
-	<div class="cart-sidebar slide-in">
-		<Cart 
-			{cart} 
-			on:remove-item={({ detail }) => removeFromCart(detail)}
-			on:update-cart={({ detail }) => updateCart(detail)}
-			on:clear-cart={clearCart}
-			on:close={toggleCart}
-		/>
-	</div>
-{/if}
 
 <style>
+	.brand-header {
+		background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+		color: white;
+		padding: 40px 20px;
+		text-align: center;
+		margin-bottom: 0;
+	}
+
+	.brand-content {
+		max-width: 975px;
+		margin: 0 auto;
+	}
+
+	.brand-title {
+		font-size: 3rem;
+		font-weight: 700;
+		margin: 0 0 10px 0;
+		background: linear-gradient(45deg, #f39c12, #e74c3c);
+		-webkit-background-clip: text;
+		-webkit-text-fill-color: transparent;
+		background-clip: text;
+	}
+
+	.brand-tagline {
+		font-size: 1.2rem;
+		font-weight: 500;
+		margin: 0 0 15px 0;
+		color: #ecf0f1;
+	}
+
+	.brand-mission {
+		font-size: 1rem;
+		line-height: 1.6;
+		margin: 0;
+		color: #bdc3c7;
+		max-width: 600px;
+		margin: 0 auto;
+	}
+
 	.header {
 		position: sticky;
 		top: 0;
