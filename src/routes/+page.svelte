@@ -10,12 +10,12 @@
 	let cart: CartItem[] = [];
 	let loading = true;
 	let showCart = false;
-	let selectedCategory = 'todos';
+	let selectedCategory = ''; // Cambiado de 'todos' a '' para mostrar todos por defecto
 	let searchQuery = '';
+	let searchOpen = false;
 
 	// Categorías disponibles
 	const categories: Category[] = [
-		{ id: 'todos', name: 'Todos', icon: '', active: true },
 		{ id: 'sillas', name: 'Sillas', icon: '', active: false },
 		{ id: 'mesas', name: 'Mesas', icon: '', active: false },
 		{ id: 'muebles', name: 'Muebles', icon: '', active: false },
@@ -196,31 +196,28 @@
 	}
 
 	function getFilteredFurniture() {
-		console.log('getFilteredFurniture called');
-		console.log('furniture array:', furniture);
-		console.log('selectedCategory:', selectedCategory);
-		console.log('searchQuery:', searchQuery);
+		// Si no hay muebles, retornar array vacío
+		if (!furniture || furniture.length === 0) {
+			return [];
+		}
 		
-		let filtered = furniture;
+		let filtered = [...furniture]; // Crear una copia
 		
-		// Filtrar por categoría
-		if (selectedCategory !== 'todos') {
+		// Filtrar por categoría (solo si hay una seleccionada)
+		if (selectedCategory && selectedCategory !== '') {
 			filtered = filtered.filter(item => item.category === selectedCategory);
-			console.log('After category filter:', filtered);
 		}
 		
 		// Filtrar por búsqueda
-		if (searchQuery.trim()) {
-			const query = searchQuery.toLowerCase();
+		if (searchQuery && searchQuery.trim()) {
+			const query = searchQuery.toLowerCase().trim();
 			filtered = filtered.filter(item => 
 				item.name.toLowerCase().includes(query) ||
 				item.description.toLowerCase().includes(query) ||
 				item.category.toLowerCase().includes(query)
 			);
-			console.log('After search filter:', filtered);
 		}
 		
-		console.log('Final filtered result:', filtered);
 		return filtered;
 	}
 
@@ -229,87 +226,70 @@
 
 <svelte:head>
 	<title>RareandMagic - Artefactos Únicos de Diseño Consciente</title>
-	<meta name="description" content="Transformamos espacios con arte y diseño consciente. Piezas únicas y sostenibles creadas con madera reutilizada y restaurada." />
+	<meta name="description" content="Artefactos mágicos, piezas únicas. Legado consciente" />
 </svelte:head>
 
-	<!-- Header de RareandMagic -->
-	<header class="brand-header">
-		<div class="brand-content">
+	<!-- Header con título y carrito -->
+	<header class="main-header">
+		<div class="header-content">
 			<h1 class="brand-title">RareandMagic</h1>
-			<p class="brand-tagline">Artefactos Únicos de Diseño Consciente</p>
-			<p class="brand-mission">Transformamos espacios en hogares y empresas con arte y diseño consciente. Cada pieza cuenta una historia única.</p>
+			<button class="cart-button" on:click={toggleCart}>
+				<ShoppingCart size={20} />
+				{#if getCartCount() > 0}
+					<span class="cart-count">{getCartCount()}</span>
+				{/if}
+			</button>
 		</div>
 	</header>
 
-	<!-- Barra de búsqueda y filtros -->
-	<div class="search-section">
-		<!-- Header estilo Instagram -->
-		<header class="header">
-			<div class="header-content">
-				<div class="logo">
-					<h1>RareandMagic</h1>
+	<!-- Descripción zen -->
+	<div class="zen-description">
+		<div class="description-container">
+			<p class="brand-mission">Artefactos mágicos, piezas únicas. Legado consciente</p>
+		</div>
+	</div>
+
+	<!-- Main Content -->
+	<div class="main-content">
+		{#if loading}
+			<div class="loading-container">
+				<div class="loading-spinner"></div>
+				<p>Cargando artefactos únicos...</p>
+			</div>
+		{:else}
+			<!-- Categorías con scroll horizontal -->
+			<CategoryScroll 
+				{categories} 
+				{searchOpen}
+				{searchQuery}
+				on:select={({ detail }) => selectCategory(detail)}
+				onToggleSearch={() => searchOpen = !searchOpen}
+				onSearchInput={(query) => searchQuery = query}
+			/>
+
+			<!-- Resultados de búsqueda -->
+			{#if searchQuery.trim()}
+				<div class="search-results">
+					<p>Resultados para "{searchQuery}" ({filteredFurniture.length} artefactos)</p>
 				</div>
-				
-				<div class="header-actions">
-					<button class="cart-button" on:click={toggleCart}>
-						<ShoppingCart size={24} />
-						<span class="cart-count">{getCartCount()}</span>
+			{/if}
+
+			<!-- Grid de productos estilo Instagram -->
+			{#if filteredFurniture.length > 0}
+				<ProductGrid 
+					products={filteredFurniture}
+					on:add-to-cart={({ detail }) => addToCart(detail)}
+					on:toggle-favorite={({ detail }) => toggleFavorite(detail)}
+				/>
+			{:else}
+				<div class="no-results">
+					<p>No se encontraron artefactos que coincidan con tu búsqueda.</p>
+					<button class="btn btn-outline" on:click={() => { searchQuery = ''; selectedCategory = ''; }}>
+						Ver todos los artefactos
 					</button>
 				</div>
-			</div>
-		</header>
-
-			<!-- Main Content -->
-	<div class="main-content">
-			{#if loading}
-				<div class="loading-container">
-					<div class="loading-spinner"></div>
-					<p>Cargando artefactos únicos...</p>
-				</div>
-			{:else}
-				<!-- Barra de búsqueda -->
-				<div class="search-container">
-					<div class="search-input-wrapper">
-						<Search size={20} />
-						<input 
-							type="text" 
-							placeholder="Buscar artefactos únicos..." 
-							bind:value={searchQuery}
-							class="search-input"
-						/>
-					</div>
-				</div>
-
-				<!-- Categorías con scroll horizontal -->
-				<CategoryScroll 
-					{categories} 
-					on:select={({ detail }) => selectCategory(detail)}
-				/>
-
-				<!-- Resultados de búsqueda -->
-				{#if searchQuery.trim()}
-					<div class="search-results">
-						<p>Resultados para "{searchQuery}" ({filteredFurniture.length} artefactos)</p>
-					</div>
-				{/if}
-
-				<!-- Grid de productos estilo Instagram -->
-				{#if filteredFurniture.length > 0}
-					<ProductGrid 
-						products={filteredFurniture}
-						on:add-to-cart={({ detail }) => addToCart(detail)}
-						on:toggle-favorite={({ detail }) => toggleFavorite(detail)}
-					/>
-				{:else}
-					<div class="no-results">
-						<p>No se encontraron artefactos que coincidan con tu búsqueda.</p>
-						<button class="btn btn-outline" on:click={() => { searchQuery = ''; selectCategory('todos'); }}>
-							Ver todos los artefactos
-						</button>
-					</div>
-				{/if}
 			{/if}
-		</div>
+		{/if}
 	</div>
 
 	<!-- Cart Sidebar -->
@@ -334,179 +314,192 @@
 		{/if}
 
 <style>
-	.brand-header {
-		background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-		color: white;
-		padding: 40px 20px;
-		text-align: center;
-		margin-bottom: 0;
+	/* Variables CSS zen y minimalistas con verde bio */
+	:global(:root) {
+		--color-bg: #fefefe;
+		--color-surface: #fafafa;
+		--color-text: #2c2c2c;
+		--color-text-secondary: #8a8a8a;
+		--color-accent: #4ade80;
+		--color-accent-light: #22c55e;
+		--color-border: #e8e8e8;
+		--color-shadow: rgba(74, 222, 128, 0.08);
+		--color-earth: #bbf7d0;
+		--color-stone: #f0fdf4;
+		--spacing-xs: 12px;
+		--spacing-sm: 20px;
+		--spacing-md: 32px;
+		--spacing-lg: 48px;
+		--spacing-xl: 64px;
+		--radius: 4px;
+		--shadow: 0 1px 3px var(--color-shadow);
+		--font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 	}
 
-	.brand-content {
-		max-width: 975px;
+	/* Header principal con título y carrito */
+	.main-header {
+		background: var(--color-bg);
+		border-bottom: 1px solid var(--color-border);
+		padding: var(--spacing-md) var(--spacing-md);
+		position: sticky;
+		top: 0;
+		z-index: 100;
+		backdrop-filter: blur(20px);
+	}
+
+	.header-content {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		max-width: 800px;
 		margin: 0 auto;
 	}
 
 	.brand-title {
-		font-size: 3rem;
-		font-weight: 700;
-		margin: 0 0 10px 0;
-		background: linear-gradient(45deg, #f39c12, #e74c3c);
-		-webkit-background-clip: text;
-		-webkit-text-fill-color: transparent;
-		background-clip: text;
-	}
-
-	.brand-tagline {
-		font-size: 1.2rem;
-		font-weight: 500;
-		margin: 0 0 15px 0;
-		color: #ecf0f1;
-	}
-
-	.brand-mission {
-		font-size: 1rem;
-		line-height: 1.6;
-		margin: 0;
-		color: #bdc3c7;
-		max-width: 600px;
-		margin: 0 auto;
-	}
-
-	.header {
-		position: sticky;
-		top: 0;
-		background: white;
-		border-bottom: 1px solid var(--border-color);
-		z-index: 1000;
-		backdrop-filter: blur(10px);
-	}
-
-	.header-content {
-		max-width: 975px;
-		margin: 0 auto;
-		padding: 0 20px;
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		height: 60px;
-	}
-
-	.logo h1 {
-		font-size: 1.5rem;
-		font-weight: 600;
-		color: var(--dark-color);
-		margin: 0;
+		font-size: 1.8rem;
+		font-weight: 400;
+		color: var(--color-text);
+		letter-spacing: 0.05em;
+		text-transform: uppercase;
 	}
 
 	.cart-button {
 		background: none;
 		border: none;
-		font-size: 1.2rem;
+		padding: var(--spacing-xs);
+		border-radius: var(--radius);
+		color: var(--color-text);
 		cursor: pointer;
 		position: relative;
-		padding: 8px;
-		border-radius: 50%;
-		transition: background 0.2s ease;
+		transition: all 0.3s ease;
+		display: flex;
+		align-items: center;
+		justify-content: center;
 	}
 
 	.cart-button:hover {
-		background: var(--light-color);
+		background: var(--color-stone);
+		color: var(--color-accent);
 	}
 
 	.cart-count {
 		position: absolute;
-		top: 0;
-		right: 0;
-		background: var(--danger-color);
+		top: -6px;
+		right: -6px;
+		background: var(--color-accent);
 		color: white;
 		font-size: 0.7rem;
-		padding: 2px 6px;
-		border-radius: 10px;
-		min-width: 18px;
+		font-weight: 400;
+		padding: 3px 8px;
+		border-radius: 12px;
+		min-width: 20px;
 		text-align: center;
 	}
 
-	.main-content {
-		max-width: 975px;
-		margin: 0 auto;
-		padding: 20px;
+	/* Descripción zen */
+	.zen-description {
+		padding: var(--spacing-lg) var(--spacing-md);
+		background: var(--color-stone);
+		border-bottom: 1px solid var(--color-border);
+		text-align: center;
 	}
 
-	.search-container {
-		margin-bottom: 20px;
-	}
-
-	.search-input-wrapper {
-		position: relative;
-		max-width: 400px;
+	.description-container {
+		max-width: 800px;
 		margin: 0 auto;
 	}
 
-	.search-input-wrapper::before {
-		content: '🔍';
-		position: absolute;
-		left: 16px;
-		top: 50%;
-		transform: translateY(-50%);
+	.brand-tagline {
 		font-size: 1.1rem;
-		color: var(--gray-color);
-		z-index: 1;
+		color: var(--color-text-secondary);
+		margin-bottom: var(--spacing-sm);
+		font-weight: 300;
+		letter-spacing: 0.02em;
 	}
 
-	.search-input {
-		width: 100%;
-		padding: 12px 16px 12px 48px;
-		border: 1px solid var(--border-color);
-		border-radius: 25px;
-		font-size: 1rem;
-		background: white;
-		transition: all 0.2s ease;
+	.brand-mission {
+		font-size: 1.2rem;
+		color: var(--color-text);
+		font-weight: 400;
+		line-height: 1.4;
+		letter-spacing: 0.03em;
+		max-width: 600px;
+		margin: 0 auto;
 	}
 
-	.search-input:focus {
-		outline: none;
-		border-color: var(--primary-color);
-		box-shadow: 0 0 0 3px rgba(0, 149, 246, 0.1);
+	/* Contenido principal */
+	.main-content {
+		max-width: 800px;
+		margin: 0 auto;
 	}
 
-	/* Categorías con scroll horizontal - ahora manejado por CategoryScroll.svelte */
-
+	/* Resultados de búsqueda */
 	.search-results {
-		text-align: center;
-		margin-bottom: 20px;
-		padding: 10px;
-		background: var(--light-color);
-		border-radius: 8px;
-		color: var(--gray-color);
+		margin: var(--spacing-md) var(--spacing-md) var(--spacing-md);
+		padding: var(--spacing-sm) 0;
+		border-bottom: 1px solid var(--color-border);
 	}
 
-	/* Grid de productos - ahora manejado por ProductGrid.svelte */
+	.search-results p {
+		font-size: 0.9rem;
+		color: var(--color-text-secondary);
+		font-weight: 300;
+	}
 
+	/* Sin resultados */
 	.no-results {
 		text-align: center;
-		padding: 60px 20px;
-		color: var(--gray-color);
+		padding: var(--spacing-xl) var(--spacing-md);
+		color: var(--color-text-secondary);
 	}
 
-	.no-results p {
-		margin-bottom: 20px;
-		font-size: 1.1rem;
+	.btn {
+		background: var(--color-accent);
+		color: white;
+		border: none;
+		padding: var(--spacing-sm) var(--spacing-md);
+		border-radius: var(--radius);
+		font-size: 0.9rem;
+		font-weight: 300;
+		cursor: pointer;
+		margin-top: var(--spacing-sm);
+		transition: all 0.3s ease;
 	}
 
+	.btn:hover {
+		background: var(--color-accent-light);
+		transform: translateY(-1px);
+	}
+
+	.btn-outline {
+		background: transparent;
+		color: var(--color-accent);
+		border: 1px solid var(--color-accent);
+	}
+
+	.btn-outline:hover {
+		background: var(--color-accent);
+		color: white;
+	}
+
+	/* Loading zen */
 	.loading-container {
-		text-align: center;
-		padding: 60px 20px;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		padding: var(--spacing-xl);
+		color: var(--color-text-secondary);
 	}
 
 	.loading-spinner {
-		width: 40px;
-		height: 40px;
-		border: 3px solid var(--light-color);
-		border-top: 3px solid var(--primary-color);
+		width: 32px;
+		height: 32px;
+		border: 2px solid var(--color-earth);
+		border-top: 2px solid var(--color-accent);
 		border-radius: 50%;
-		animation: spin 1s linear infinite;
-		margin: 0 auto 20px;
+		animation: spin 2s linear infinite;
+		margin-bottom: var(--spacing-sm);
 	}
 
 	@keyframes spin {
@@ -514,53 +507,40 @@
 		100% { transform: rotate(360deg); }
 	}
 
-	/* Cart Sidebar */
-	.cart-overlay {
-		position: fixed;
-		top: 0;
-		left: 0;
-		right: 0;
-		bottom: 0;
-		background: rgba(0, 0, 0, 0.5);
-		z-index: 2000;
-		cursor: pointer;
-	}
-
-	.cart-overlay:focus {
-		outline: 2px solid var(--primary-color);
-		outline-offset: 2px;
-	}
-
-	.cart-sidebar {
-		position: fixed;
-		top: 0;
-		right: 0;
-		width: 100%;
-		max-width: 400px;
-		height: 100vh;
-		background: white;
-		z-index: 2001;
-		box-shadow: var(--shadow-hover);
-		overflow-y: auto;
-	}
-
+	/* Responsive */
 	@media (max-width: 768px) {
-		.header-content {
-			padding: 0 16px;
+		.brand-title {
+			font-size: 1.5rem;
 		}
 
+		.brand-tagline {
+			font-size: 1rem;
+		}
+
+		.brand-mission {
+			font-size: 1.1rem;
+		}
+
+		.main-header,
+		.zen-description,
+		.search-toggle-section,
+		.search-panel,
 		.main-content {
-			padding: 16px;
+			padding-left: var(--spacing-sm);
+			padding-right: var(--spacing-sm);
+		}
+	}
+
+	@media (max-width: 480px) {
+		.brand-title {
+			font-size: 1.3rem;
 		}
 
-		/* Estilos responsivos manejados por componentes */
-
-		.cart-sidebar {
-			width: 100%;
-			max-width: none;
+		.brand-mission {
+			font-size: 1rem;
 		}
 
-		.search-input-wrapper {
+		.search-toggle-btn {
 			max-width: 100%;
 		}
 	}

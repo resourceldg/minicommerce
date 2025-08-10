@@ -86,9 +86,9 @@
 <style>
 	.product-grid {
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-		gap: 24px;
-		padding: 20px;
+		grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+		gap: 64px; /* Aumentado de var(--spacing-lg) que es 48px a 64px */
+		padding: var(--spacing-md);
 	}
 
 	.product-card {
