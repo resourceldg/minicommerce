@@ -195,11 +195,11 @@ export const db = {
 					('Mesa de Comedor Extensible', 'Mesa de comedor de 6-8 personas con sistema extensible oculto', 600.00, 'https://cdn.pixabay.com/photo/2017/08/27/10/16/interior-2685521_1280.jpg', 'mesas'),
 					('Armario de Pared Antiguo', 'Armario empotrado restaurado con puertas correderas y estantes ajustables', 800.00, 'https://cdn.pixabay.com/photo/2016/11/18/17/20/house-1835923_1280.jpg', 'muebles'),
 					('Silla de Jardín Adirondack', 'Silla de jardín clásica restaurada, perfecta para terrazas y patios', 180.00, 'https://cdn.pixabay.com/photo/2017/03/28/12/11/chairs-2181947_1280.jpg', 'sillas'),
-					('Mesa de Noche Artesanal', 'Mesa de noche con cajón secreto y patas talladas a mano', 250.00, 'https://cdn.pixabay.com/photo/2016/11/18/17/20/living-room-1835923_1280.jpg', 'muebles'),
+					('Mesa de Noche Artesanal', 'Mesa de noche con cajón secreto y patas talladas a mano', 250.00, 'https://cdn.pixabay.com/photo/2017/03/28/12/11/chairs-2181947_1280.jpg', 'muebles'),
 					('Silla de Lectura Chesterfield', 'Silla de lectura restaurada con tapizado en cuero genuino y botones decorativos', 350.00, 'https://cdn.pixabay.com/photo/2017/08/27/10/16/interior-2685521_1280.jpg', 'sillas'),
-					('Lámpara de Mesa Vintage', 'Lámpara de mesa restaurada con pantalla de tela y base de latón', 120.00, 'https://cdn.pixabay.com/photo/2016/11/18/17/20/living-room-1835923_1280.jpg', 'iluminacion'),
+					('Lámpara de Mesa Vintage', 'Lámpara de mesa restaurada con pantalla de tela y base de latón', 120.00, 'https://cdn.pixabay.com/photo/2017/03/28/12/11/chairs-2181947_1280.jpg', 'iluminacion'),
 					('Espejo Decorativo Antiguo', 'Espejo de pared restaurado con marco tallado y acabado dorado', 280.00, 'https://cdn.pixabay.com/photo/2017/03/28/12/11/chairs-2181947_1280.jpg', 'decoracion'),
-					('Estantería de Libros Rústica', 'Estantería de madera maciza con diseño rústico y acabado natural', 320.00, 'https://cdn.pixabay.com/photo/2016/11/18/17/20/house-1835923_1280.jpg', 'muebles')
+					('Estantería de Libros Rústica', 'Estantería de madera maciza con diseño rústico y acabado natural', 320.00, 'https://cdn.pixabay.com/photo/2017/03/28/12/11/chairs-2181947_1280.jpg', 'muebles')
 				`;
 				
 				console.log('✅ Datos de ejemplo insertados en PostgreSQL');
@@ -249,6 +249,298 @@ export const db = {
 			
 			return { 
 				success: false, 
+				error: error instanceof Error ? error.message : 'Error desconocido',
+				mode: 'error'
+			};
+		}
+	},
+
+	async migrateToFullSchema() {
+		try {
+			if (!DB_CONFIG.hasDatabaseConfig()) {
+				console.log('⚠️ No hay configuración de base de datos, saltando migración');
+				return { success: true, mode: 'local' };
+			}
+
+			console.log('🚀 Iniciando migración a esquema completo...');
+
+			// Crear extensiones
+			await sql`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`;
+			await sql`CREATE EXTENSION IF NOT EXISTS pg_trgm`;
+			await sql`CREATE EXTENSION IF NOT EXISTS btree_gin`;
+			console.log('✅ Extensiones creadas/verificadas');
+
+			// Crear tabla users
+			await sql`
+				CREATE TABLE IF NOT EXISTS users (
+					id BIGSERIAL PRIMARY KEY,
+					email TEXT UNIQUE NOT NULL,
+					phone TEXT,
+					name TEXT,
+					role TEXT NOT NULL DEFAULT 'customer',
+					created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+					updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+				)
+			`;
+			console.log('✅ Tabla users creada/verificada');
+
+			// Crear tabla categories
+			await sql`
+				CREATE TABLE IF NOT EXISTS categories (
+					id BIGSERIAL PRIMARY KEY,
+					name TEXT NOT NULL UNIQUE,
+					slug TEXT UNIQUE,
+					created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+				)
+			`;
+			console.log('✅ Tabla categories creada/verificada');
+
+			// Crear tabla products (reemplazará furniture)
+			await sql`
+				CREATE TABLE IF NOT EXISTS products (
+					id BIGSERIAL PRIMARY KEY,
+					sku TEXT UNIQUE,
+					title TEXT NOT NULL,
+					slug TEXT UNIQUE,
+					description TEXT,
+					price_cents INTEGER NOT NULL CHECK (price_cents >= 0),
+					is_unique BOOLEAN NOT NULL DEFAULT false,
+					stock INTEGER NOT NULL DEFAULT 0,
+					stock_threshold INTEGER NOT NULL DEFAULT 5,
+					status TEXT NOT NULL DEFAULT 'active',
+					rating_avg NUMERIC(3,2) DEFAULT 0,
+					rating_count INTEGER DEFAULT 0,
+					category_id BIGINT REFERENCES categories(id),
+					searchable tsvector,
+					created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+					updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+				)
+			`;
+			console.log('✅ Tabla products creada/verificada');
+
+			// Crear tabla product_images
+			await sql`
+				CREATE TABLE IF NOT EXISTS product_images (
+					id BIGSERIAL PRIMARY KEY,
+					product_id BIGINT REFERENCES products(id) ON DELETE CASCADE,
+					url TEXT NOT NULL,
+					alt_text TEXT,
+					position SMALLINT DEFAULT 0,
+					created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+				)
+			`;
+			console.log('✅ Tabla product_images creada/verificada');
+
+			// Crear tabla tags
+			await sql`
+				CREATE TABLE IF NOT EXISTS tags (
+					id BIGSERIAL PRIMARY KEY,
+					name TEXT NOT NULL UNIQUE,
+					slug TEXT UNIQUE,
+					created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+				)
+			`;
+			console.log('✅ Tabla tags creada/verificada');
+
+			// Crear tabla product_tags
+			await sql`
+				CREATE TABLE IF NOT EXISTS product_tags (
+					product_id BIGINT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+					tag_id BIGINT NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+					PRIMARY KEY (product_id, tag_id)
+				)
+			`;
+			console.log('✅ Tabla product_tags creada/verificada');
+
+			// Crear tabla favorites
+			await sql`
+				CREATE TABLE IF NOT EXISTS favorites (
+					user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+					product_id BIGINT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+					created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+					PRIMARY KEY(user_id, product_id)
+				)
+			`;
+			console.log('✅ Tabla favorites creada/verificada');
+
+			// Crear tabla ratings
+			await sql`
+				CREATE TABLE IF NOT EXISTS ratings (
+					id BIGSERIAL PRIMARY KEY,
+					user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+					product_id BIGINT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+					rating SMALLINT NOT NULL CHECK (rating BETWEEN 1 AND 5),
+					comment TEXT,
+					created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+					updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+					UNIQUE(user_id, product_id)
+				)
+			`;
+			console.log('✅ Tabla ratings creada/verificada');
+
+			// Crear tabla carts
+			await sql`
+				CREATE TABLE IF NOT EXISTS carts (
+					id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+					session_id TEXT,
+					user_id BIGINT REFERENCES users(id),
+					created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+					updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+					expires_at TIMESTAMPTZ NOT NULL DEFAULT (now() + INTERVAL '48 hours'),
+					is_snapshot BOOLEAN NOT NULL DEFAULT false
+				)
+			`;
+			console.log('✅ Tabla carts creada/verificada');
+
+			// Crear tabla cart_items
+			await sql`
+				CREATE TABLE IF NOT EXISTS cart_items (
+					id BIGSERIAL PRIMARY KEY,
+					cart_id UUID NOT NULL REFERENCES carts(id) ON DELETE CASCADE,
+					product_id BIGINT NOT NULL REFERENCES products(id),
+					quantity SMALLINT NOT NULL CHECK (quantity >= 1 AND quantity <= 10),
+					unit_price_cents INTEGER NOT NULL CHECK (unit_price_cents >= 0),
+					created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+					updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+				)
+			`;
+			console.log('✅ Tabla cart_items creada/verificada');
+
+			// Crear tabla orders
+			await sql`
+				CREATE TABLE IF NOT EXISTS orders (
+					id BIGSERIAL PRIMARY KEY,
+					user_id BIGINT REFERENCES users(id),
+					contact_email TEXT,
+					contact_phone TEXT,
+					total_cents INTEGER NOT NULL CHECK (total_cents >= 0),
+					status TEXT NOT NULL DEFAULT 'pending_whatsapp',
+					created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+					updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+					whatsapp_sent_at TIMESTAMPTZ
+				)
+			`;
+			console.log('✅ Tabla orders creada/verificada');
+
+			// Crear tabla order_items
+			await sql`
+				CREATE TABLE IF NOT EXISTS order_items (
+					id BIGSERIAL PRIMARY KEY,
+					order_id BIGINT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+					product_id BIGINT NOT NULL,
+					unit_price_cents INTEGER NOT NULL,
+					quantity SMALLINT NOT NULL,
+					title_snapshot TEXT,
+					sku_snapshot TEXT,
+					created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+				)
+			`;
+			console.log('✅ Tabla order_items creada/verificada');
+
+			// Crear tabla stock_changes
+			await sql`
+				CREATE TABLE IF NOT EXISTS stock_changes (
+					id BIGSERIAL PRIMARY KEY,
+					product_id BIGINT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+					delta INTEGER NOT NULL,
+					reason TEXT NOT NULL,
+					actor_user_id BIGINT,
+					created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+				)
+			`;
+			console.log('✅ Tabla stock_changes creada/verificada');
+
+			// Crear tabla notifications
+			await sql`
+				CREATE TABLE IF NOT EXISTS notifications (
+					id BIGSERIAL PRIMARY KEY,
+					user_id BIGINT,
+					type TEXT NOT NULL,
+					payload JSONB,
+					is_read BOOLEAN NOT NULL DEFAULT false,
+					created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+				)
+			`;
+			console.log('✅ Tabla notifications creada/verificada');
+
+			// Crear índices
+			await sql`CREATE INDEX IF NOT EXISTS products_search_idx ON products USING GIN (to_tsvector('spanish', coalesce(title,'') || ' ' || coalesce(description,'')))`;
+			await sql`CREATE INDEX IF NOT EXISTS idx_products_status ON products(status)`;
+			await sql`CREATE INDEX IF NOT EXISTS idx_products_slug ON products(slug)`;
+			await sql`CREATE INDEX IF NOT EXISTS idx_carts_session ON carts(session_id)`;
+			await sql`CREATE INDEX IF NOT EXISTS idx_carts_user ON carts(user_id)`;
+			await sql`CREATE INDEX IF NOT EXISTS idx_orders_user ON orders(user_id)`;
+			await sql`CREATE INDEX IF NOT EXISTS idx_cart_items_cart ON cart_items(cart_id)`;
+			await sql`CREATE INDEX IF NOT EXISTS idx_favorites_user ON favorites(user_id)`;
+			await sql`CREATE INDEX IF NOT EXISTS idx_product_tags_product ON product_tags(product_id)`;
+			await sql`CREATE INDEX IF NOT EXISTS idx_product_tags_tag ON product_tags(tag_id)`;
+			console.log('✅ Índices creados/verificados');
+
+			// Migrar datos de furniture a products si existe
+			const { rows: furnitureExists } = await sql`SELECT COUNT(*) as count FROM information_schema.tables WHERE table_name = 'furniture'`;
+			if (parseInt(furnitureExists[0].count) > 0) {
+				console.log('🔄 Migrando datos de furniture a products...');
+				
+				// Crear categorías básicas
+				await sql`
+					INSERT INTO categories (name, slug) VALUES 
+					('sillas', 'sillas'),
+					('mesas', 'mesas'),
+					('muebles', 'muebles'),
+					('asientos', 'asientos'),
+					('estanterías', 'estanterias'),
+					('iluminacion', 'iluminacion'),
+					('decoracion', 'decoracion')
+					ON CONFLICT (slug) DO NOTHING
+				`;
+
+				// Migrar productos
+				await sql`
+					INSERT INTO products (title, description, price_cents, status, category_id)
+					SELECT 
+						f.name,
+						f.description,
+						(f.price * 100)::INTEGER,
+						'active',
+						c.id
+					FROM furniture f
+					LEFT JOIN categories c ON c.name = f.category
+					ON CONFLICT DO NOTHING
+				`;
+
+				// Migrar imágenes
+				await sql`
+					INSERT INTO product_images (product_id, url, alt_text, position)
+					SELECT 
+						p.id,
+						f.image,
+						f.name,
+						0
+					FROM products p
+					JOIN furniture f ON f.name = p.title
+					ON CONFLICT DO NOTHING
+				`;
+
+				console.log('✅ Datos migrados de furniture a products');
+			}
+
+			return {
+				success: true,
+				mode: 'postgres',
+				message: 'Migración a esquema completo completada exitosamente',
+				tablesCreated: [
+					'users', 'categories', 'products', 'product_images', 
+					'tags', 'product_tags', 'favorites', 'ratings',
+					'carts', 'cart_items', 'orders', 'order_items',
+					'stock_changes', 'notifications'
+				],
+				dataMigrated: true
+			};
+
+		} catch (error) {
+			console.error('❌ Error en migración:', error);
+			return {
+				success: false,
 				error: error instanceof Error ? error.message : 'Error desconocido',
 				mode: 'error'
 			};
