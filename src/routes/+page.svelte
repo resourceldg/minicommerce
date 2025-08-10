@@ -225,14 +225,14 @@
 </script>
 
 <svelte:head>
-	<title>RareandMagic - Artefactos Únicos de Diseño Consciente</title>
+	<title>Rare&Magic - Artefactos Únicos de Diseño Consciente</title>
 	<meta name="description" content="Artefactos mágicos, piezas únicas. Legado consciente" />
 </svelte:head>
 
 	<!-- Header con título y carrito -->
 	<header class="main-header">
 		<div class="header-content">
-			<h1 class="brand-title">RareandMagic</h1>
+			<h1 class="brand-title">Rare&Magic</h1>
 			<button class="cart-button" on:click={toggleCart}>
 				<ShoppingCart size={20} />
 				{#if getCartCount() > 0}
@@ -245,7 +245,7 @@
 	<!-- Descripción zen -->
 	<div class="zen-description">
 		<div class="description-container">
-			<p class="brand-mission">Artefactos mágicos, piezas únicas. Legado consciente</p>
+			<p class="brand-mission">Artefactos mágicos, piezas únicas. Legado consciente.</p>
 		</div>
 	</div>
 
