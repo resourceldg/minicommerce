@@ -792,4 +792,54 @@
 			max-width: 100%;
 		}
 	}
+
+	/* Estilos globales para el scroll de la página principal (10px) - diferenciado del checkout */
+	:global(html) {
+		scrollbar-width: thin;
+		scrollbar-color: #6b7280 #f3f4f6;
+	}
+
+	:global(html::-webkit-scrollbar) {
+		width: 10px;
+	}
+
+	:global(html::-webkit-scrollbar-track) {
+		background: #f3f4f6;
+		border-radius: 5px;
+	}
+
+	:global(html::-webkit-scrollbar-thumb) {
+		background: #6b7280;
+		border-radius: 5px;
+		border: 1px solid #4b5563;
+	}
+
+	:global(html::-webkit-scrollbar-thumb:hover) {
+		background: #4b5563;
+	}
+
+	/* Asegurar que el body tenga scroll global */
+	:global(body) {
+		scrollbar-width: thin;
+		scrollbar-color: #6b7280 #f3f4f6;
+	}
+
+	:global(body::-webkit-scrollbar) {
+		width: 10px;
+	}
+
+	:global(body::-webkit-scrollbar-track) {
+		background: #f3f4f6;
+		border-radius: 5px;
+	}
+
+	:global(body::-webkit-scrollbar-thumb) {
+		background: #6b7280;
+		border-radius: 5px;
+		border: 1px solid #4b5563;
+	}
+
+	:global(body::-webkit-scrollbar-thumb:hover) {
+		background: #4b5563;
+	}
 </style>

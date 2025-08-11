@@ -7,7 +7,20 @@
 	
 	const dispatch = createEventDispatcher();
 
+	// Función para deshabilitar scroll del body
+	function disableBodyScroll() {
+		document.body.style.overflow = 'hidden';
+		document.body.style.paddingRight = '10px'; // Compensar el scrollbar que desaparece
+	}
+
+	// Función para habilitar scroll del body
+	function enableBodyScroll() {
+		document.body.style.overflow = '';
+		document.body.style.paddingRight = '';
+	}
+
 	function closeCheckout() {
+		enableBodyScroll();
 		dispatch('close');
 	}
 
@@ -36,6 +49,19 @@
 	}, 0);
 
 	$: itemCount = items.reduce((count, { quantity }) => count + quantity, 0);
+
+	// Watcher para controlar el scroll del body cuando se abre/cierra el checkout
+	$: if (isOpen) {
+		disableBodyScroll();
+	} else {
+		enableBodyScroll();
+	}
+
+	// Cleanup cuando el componente se destruye
+	import { onDestroy } from 'svelte';
+	onDestroy(() => {
+		enableBodyScroll();
+	});
 </script>
 
 {#if isOpen}
@@ -55,6 +81,7 @@
 				</div>
 			{:else}
 				<div class="checkout-content">
+					<!-- Lista de productos con scroll -->
 					<div class="items-list">
 						{#each items as { item, quantity }, index}
 							<div class="checkout-item">
@@ -107,23 +134,26 @@
 						{/each}
 					</div>
 
-					<!-- Resumen simple -->
-					<div class="checkout-summary">
-						<div class="summary-row">
-							<span>Productos ({itemCount})</span>
-							<span>{formatPrice(totalAmount)}</span>
+					<!-- Footer fijo con resumen y acciones -->
+					<div class="checkout-footer">
+						<!-- Resumen simple -->
+						<div class="checkout-summary">
+							<div class="summary-row">
+								<span>Productos ({itemCount})</span>
+								<span>{formatPrice(totalAmount)}</span>
+							</div>
+							
+							<div class="total-row">
+								<span class="total-label">Total</span>
+								<span class="total-amount">{formatPrice(totalAmount)}</span>
+							</div>
 						</div>
-						
-						<div class="total-row">
-							<span class="total-label">Total</span>
-							<span class="total-amount">{formatPrice(totalAmount)}</span>
-						</div>
-					</div>
 
-					<div class="checkout-actions">
-						<button class="buy-now-btn" on:click={buyNow}>
-							🛒 Comprar Ahora
-						</button>
+						<div class="checkout-actions">
+							<button class="buy-now-btn" on:click={buyNow}>
+								🛒 Comprar Ahora
+							</button>
+						</div>
 					</div>
 				</div>
 			{/if}
@@ -225,13 +255,51 @@
 	.items-list {
 		flex: 1;
 		overflow-y: auto;
-		padding: 1rem;
+		overflow-x: hidden;
+		padding: 1.2rem;
+		/* Scroll aparece al tercer producto en desktop */
+		max-height: 45vh;
+		/* Márgenes para mejor separación */
+		margin: 0 0.8rem 0.8rem 0.8rem;
+		/* Borde sutil para definir mejor el área */
+		border: 1px solid #f0f0f0;
+		border-radius: 8px;
+		background: #fafafa;
+		/* Asegurar que no se desborde */
+		width: calc(100% - 1.6rem);
+		box-sizing: border-box;
+	}
+
+	/* Scrollbar del checkout - más visible y diferenciado */
+	.items-list::-webkit-scrollbar {
+		width: 8px;
+	}
+
+	.items-list::-webkit-scrollbar-track {
+		background: #f0f0f0;
+		border-radius: 4px;
+	}
+
+	.items-list::-webkit-scrollbar-thumb {
+		background: #22c55e;
+		border-radius: 4px;
+		border: 1px solid #16a34a;
+	}
+
+	.items-list::-webkit-scrollbar-thumb:hover {
+		background: #16a34a;
+	}
+
+	/* Scrollbar para Firefox */
+	.items-list {
+		scrollbar-width: thin;
+		scrollbar-color: #22c55e #f0f0f0;
 	}
 
 	.checkout-item {
 		display: grid;
-		grid-template-columns: 80px 1fr auto auto 40px;
-		gap: 1rem;
+		grid-template-columns: 70px 1fr auto auto 35px;
+		gap: 0.8rem;
 		align-items: center;
 		padding: 1rem;
 		border: 1px solid var(--color-border);
@@ -239,6 +307,10 @@
 		margin-bottom: 1rem;
 		background: white;
 		transition: all 0.2s ease;
+		/* Sombra sutil para mejor separación visual */
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+		/* Asegurar que no se desborde */
+		min-width: 0;
 	}
 
 	.checkout-item:hover {
@@ -247,8 +319,8 @@
 	}
 
 	.item-image {
-		width: 80px;
-		height: 80px;
+		width: 70px;
+		height: 70px;
 		border-radius: 8px;
 		overflow: hidden;
 		background: var(--color-surface);
@@ -288,8 +360,8 @@
 	}
 
 	.qty-btn {
-		width: 32px;
-		height: 32px;
+		width: 28px;
+		height: 28px;
 		border: 1px solid var(--color-border);
 		background: white;
 		border-radius: 6px;
@@ -297,7 +369,7 @@
 		align-items: center;
 		justify-content: center;
 		cursor: pointer;
-		font-size: 1.2rem;
+		font-size: 1rem;
 		font-weight: 600;
 		transition: all 0.2s ease;
 	}
@@ -328,8 +400,8 @@
 	}
 
 	.remove-btn {
-		width: 32px;
-		height: 32px;
+		width: 28px;
+		height: 28px;
 		border: 1px solid var(--color-border);
 		background: white;
 		border-radius: 50%;
@@ -337,7 +409,7 @@
 		align-items: center;
 		justify-content: center;
 		cursor: pointer;
-		font-size: 1.2rem;
+		font-size: 1rem;
 		font-weight: 600;
 		color: var(--color-text-secondary);
 		transition: all 0.2s ease;
@@ -349,9 +421,16 @@
 		border-color: #ff4757;
 	}
 
+	.checkout-footer {
+		/* Footer fijo en la parte inferior */
+		flex-shrink: 0;
+		background: var(--color-surface);
+		border-top: 1px solid var(--color-border);
+	}
+
 	.checkout-summary {
 		padding: 1.5rem;
-		border-top: 1px solid var(--color-border);
+		border-bottom: 1px solid var(--color-border);
 		background: var(--color-surface);
 	}
 
@@ -480,6 +559,29 @@
 			max-width: 100%;
 		}
 
+		.checkout-content {
+			/* Asegurar que el contenido se ajuste al viewport en móviles */
+			min-height: 0;
+			/* Forzar que el footer esté siempre visible */
+			justify-content: space-between;
+		}
+
+		.items-list {
+			/* Reducir altura máxima para móviles - scroll aparece al segundo producto */
+			max-height: 30vh;
+			/* Asegurar que no ocupe todo el espacio disponible */
+			flex-shrink: 1;
+			margin: 0 0.8rem 0.8rem 0.8rem;
+			padding: 1rem;
+		}
+
+		.checkout-footer {
+			/* Footer siempre visible en la parte inferior */
+			flex-shrink: 0;
+			/* Asegurar que esté en la parte inferior */
+			margin-top: auto;
+		}
+
 		.checkout-item {
 			grid-template-columns: 60px 1fr auto;
 			gap: 0.8rem;
@@ -509,4 +611,6 @@
 			justify-self: end;
 		}
 	}
+
+	/* Nota: Los estilos globales del scroll se manejan en el componente principal */
 </style> 
