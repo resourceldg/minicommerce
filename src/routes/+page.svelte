@@ -8,7 +8,6 @@
 	import ProductGrid from '$lib/components/ProductGrid.svelte';
 	import { APP_CONFIG } from '$lib/config';
 	import { CHECKOUT_CONFIG } from '$lib/checkoutConfig';
-import { recommendationEngine } from '$lib/recommendationEngine';
 
 	let furniture: Furniture[] = [];
 	let cart: CartItem[] = [];
@@ -45,24 +44,7 @@ import { recommendationEngine } from '$lib/recommendationEngine';
 		}
 	}
 
-	// Función para registrar comportamiento del usuario para recomendaciones
-	function recordUserBehavior(action: 'view' | 'add' | 'remove', product: Furniture) {
-		try {
-			switch (action) {
-				case 'view':
-					recommendationEngine.recordProductView(product.id.toString(), product.category);
-					break;
-				case 'add':
-					recommendationEngine.recordCartAddition(product.id.toString(), product.category);
-					break;
-				case 'remove':
-					recommendationEngine.recordCartRemoval(product.id.toString());
-					break;
-			}
-		} catch (error) {
-			console.warn('Error recording user behavior:', error);
-		}
-	}
+
 
 	// Función para iniciar el timer de cierre automático
 	function startCartAutoCloseTimer() {
@@ -286,8 +268,7 @@ import { recommendationEngine } from '$lib/recommendationEngine';
 		
 		console.log('🔄 After update - cartCount should be:', getCartCount());
 		
-		// Registrar comportamiento para recomendaciones
-		recordUserBehavior('add', item);
+
 		
 		// Guardar en localStorage
 		saveCartToStorage();
@@ -304,9 +285,7 @@ import { recommendationEngine } from '$lib/recommendationEngine';
 		startCartAutoCloseTimer();
 	}
 
-	function addRecommendation(product: Furniture) {
-		addToCart(product);
-	}
+
 
 	function saveCartToStorage() {
 		try {
@@ -319,15 +298,7 @@ import { recommendationEngine } from '$lib/recommendationEngine';
 	function removeFromCart(index: number) {
 		const removedItem = cart[index];
 		if (removedItem) {
-			// Registrar comportamiento para recomendaciones
-			recordUserBehavior('remove', {
-				id: removedItem.id,
-				name: removedItem.name,
-				description: removedItem.description,
-				price: removedItem.price,
-				image: removedItem.image,
-				category: removedItem.category
-			} as Furniture);
+			
 		}
 		cart = cart.filter((_, i) => i !== index);
 		saveCartToStorage();
@@ -358,8 +329,8 @@ import { recommendationEngine } from '$lib/recommendationEngine';
 	function toggleCheckout() {
 		showCheckout = !showCheckout;
 		if (showCheckout) {
-			// Si se abre manualmente, iniciar timer
-			startCartAutoCloseTimer();
+			// Si se abre manualmente desde el icono del carrito, NO iniciar timer
+			// El timer solo se activa cuando se abre desde addToCart
 		} else {
 			// Si se cierra manualmente, limpiar timer
 			clearCartTimers();
@@ -403,9 +374,7 @@ import { recommendationEngine } from '$lib/recommendationEngine';
 		// Abrir WhatsApp en nueva ventana
 		window.open(whatsappUrl, '_blank');
 		
-		// Registrar compra completada para recomendaciones
-		const productIds = cart.map(item => item.id.toString());
-		recommendationEngine.recordPurchase(productIds);
+
 		
 		// Limpiar carrito después de enviar
 		cart = [];
@@ -568,7 +537,7 @@ import { recommendationEngine } from '$lib/recommendationEngine';
 			on:update-quantity={({ detail }) => updateQuantity(detail.index, detail.quantity)}
 			on:remove-item={({ detail }) => removeItemFromCheckout(detail.index)}
 			on:buy-now={buyNow}
-			on:add-recommendation={({ detail }) => addRecommendation(detail)}
+
 		/>
 	{/if}
 
