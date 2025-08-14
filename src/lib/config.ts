@@ -4,14 +4,14 @@ export const config = {
 	store: {
 		name: 'Muebles Restaurados',
 		description: 'Muebles restaurados únicos y artesanales',
-		phone: '+1234567890', // Cambiar por tu número real
+		phone: '+542236202061', // Número real de WhatsApp
 		email: 'info@mueblesrestaurados.com',
 		address: 'Tu dirección aquí'
 	},
 
 	// Configuración de WhatsApp
 	whatsapp: {
-		number: '+1234567890', // Cambiar por tu número real
+		number: '+542236202061', // Número real de WhatsApp
 		message: {
 			greeting: '🪑 Nuevo Pedido de Muebles Restaurados 🪑',
 			products: 'Productos:',
@@ -59,7 +59,7 @@ export const config = {
 // Configuración de la aplicación
 export const APP_CONFIG = {
 	// Número de WhatsApp para pedidos (formato internacional)
-	WHATSAPP_NUMBER: '+1234567890', // Cambiar por tu número real
+	WHATSAPP_NUMBER: '+542236202061', // Número real para recibir pedidos
 	
 	// Nombre de la tienda
 	STORE_NAME: 'Rare&Magic',
@@ -109,9 +109,11 @@ function getEnvVar(key: string): string {
 	return '';
 }
 
-// Función helper para obtener la URL de WhatsApp
+// Función helper para obtener la URL de WhatsApp (más confiable para WhatsApp Business)
 export function getWhatsAppUrl(message: string): string {
-	return `https://wa.me/${config.whatsapp.number}?text=${encodeURIComponent(message)}`;
+	const phoneNumber = config.whatsapp.number.replace('+', '');
+	// Usar la API de WhatsApp Business que es más confiable
+	return `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`;
 }
 
 // Función helper para formatear precios

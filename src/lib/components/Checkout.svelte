@@ -37,6 +37,31 @@
 		dispatch('buy-now');
 	}
 
+	function sendWhatsApp() {
+		// Número de WhatsApp de prueba (puedes cambiarlo por tu número real)
+		const phoneNumber = '542236202061'; // Número real de WhatsApp
+		
+		// Crear mensaje con detalles del pedido
+		let message = '🛒 *Nuevo Pedido - MiniCommerce*\n\n';
+		message += `📋 *Productos:*\n`;
+		
+		items.forEach(({ item, quantity }) => {
+			message += `• ${item.name} x${quantity} - ${formatPrice(item.price * quantity)}\n`;
+		});
+		
+		message += `\n💰 *Total: ${formatPrice(totalAmount)}*\n`;
+		message += `\n📱 *Enviado desde:* ${window.location.hostname}`;
+		
+		// Codificar el mensaje para URL
+		const encodedMessage = encodeURIComponent(message);
+		
+		// Crear URL de WhatsApp
+		const whatsappURL = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+		
+		// Abrir WhatsApp en nueva pestaña
+		window.open(whatsappURL, '_blank');
+	}
+
 	function formatPrice(price: number) {
 		return new Intl.NumberFormat('es-ES', {
 			style: 'currency',
@@ -150,6 +175,9 @@
 						</div>
 
 						<div class="checkout-actions">
+							<button class="whatsapp-btn" on:click={sendWhatsApp}>
+								📱 Enviar por WhatsApp
+							</button>
 							<button class="buy-now-btn" on:click={buyNow}>
 								🛒 Comprar Ahora
 							</button>

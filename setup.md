@@ -2,11 +2,11 @@
 
 ## ⚡ Pasos para tener tu tienda funcionando en 10 minutos
 
-### 1. 📱 Cambiar tu número de WhatsApp
-Edita `src/lib/components/Cart.svelte` línea ~40:
-```typescript
-const whatsappUrl = `https://wa.me/+TU_NUMERO_REAL?text=${encodeURIComponent(message)}`;
-```
+### 1. ✅ Número de WhatsApp configurado
+El número `+542236202061` ya está configurado en:
+- `src/lib/components/Cart.svelte`
+- `src/lib/components/Checkout.svelte`
+- `src/lib/config.ts`
 
 ### 2. 🗄️ Configurar PostgreSQL en Vercel
 1. Ve a [vercel.com/dashboard](https://vercel.com/dashboard)

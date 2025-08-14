@@ -369,12 +369,39 @@
 	function buyNow() {
 		// Crear mensaje de WhatsApp con los productos del carrito
 		const message = createWhatsAppMessage();
-		const whatsappUrl = `https://wa.me/${APP_CONFIG.WHATSAPP_NUMBER.replace('+', '')}?text=${encodeURIComponent(message)}`;
 		
-		// Abrir WhatsApp en nueva ventana
-		window.open(whatsappUrl, '_blank');
+		// Intentar múltiples métodos para abrir WhatsApp
+		const phoneNumber = APP_CONFIG.WHATSAPP_NUMBER.replace('+', '');
 		
-
+		// Método 1: API de WhatsApp Business (más confiable)
+		const whatsappBusinessUrl = `https://api.whatsapp.com/send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`;
+		
+		// Método 2: whatsapp:// (protocolo directo para móviles)
+		const whatsappDirectUrl = `whatsapp://send?phone=${phoneNumber}&text=${encodeURIComponent(message)}`;
+		
+		// Método 3: wa.me (fallback)
+		const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
+		
+		// Detectar si es móvil
+		const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+		
+		try {
+			if (isMobile) {
+				// En móviles, intentar primero el protocolo directo
+				window.location.href = whatsappDirectUrl;
+			} else {
+				// En desktop, usar la API de WhatsApp Business (más confiable)
+				window.open(whatsappBusinessUrl, '_blank');
+			}
+			
+			// Mostrar mensaje de éxito
+			alert('✅ Pedido enviado a WhatsApp. Si no se abre automáticamente, copia este mensaje:\n\n' + message);
+			
+		} catch (error) {
+			// Fallback a wa.me si fallan los otros métodos
+			console.warn('Error abriendo WhatsApp, usando fallback:', error);
+			window.open(whatsappUrl, '_blank');
+		}
 		
 		// Limpiar carrito después de enviar
 		cart = [];

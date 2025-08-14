@@ -43,7 +43,7 @@
 			`*Total: $${total}*\n\n` +
 			`¡Hola! Me gustaría hacer este pedido. ¿Podrías confirmarme disponibilidad y opciones de entrega?`;
 
-		const whatsappUrl = `https://wa.me/+1234567890?text=${encodeURIComponent(message)}`;
+		const whatsappUrl = `https://wa.me/+542236202061?text=${encodeURIComponent(message)}`;
 		window.open(whatsappUrl, '_blank');
 	}
 </script>

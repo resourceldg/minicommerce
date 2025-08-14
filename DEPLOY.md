@@ -88,11 +88,8 @@ git push origin main
 
 ## 📱 Paso 5: Configurar WhatsApp
 
-### 5.1 Cambiar número
-Edita `src/lib/components/Cart.svelte`:
-```typescript
-const whatsappUrl = `https://wa.me/+TU_NUMERO_REAL?text=${encodeURIComponent(message)}`;
-```
+### 5.1 ✅ Número de WhatsApp configurado
+El número `+542236202061` ya está configurado en todos los componentes necesarios.
 
 ### 5.2 Redeploy
 ```bash

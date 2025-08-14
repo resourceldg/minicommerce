@@ -22,7 +22,7 @@ POSTGRES_DATABASE=verceldb
 # Configuración de la tienda
 PUBLIC_STORE_NAME="Rare&Magic"
 PUBLIC_STORE_DESCRIPTION="Muebles únicos, legado consciente"
-PUBLIC_WHATSAPP_NUMBER="+1234567890"
+PUBLIC_WHATSAPP_NUMBER="+542236202061"
 PUBLIC_API_BASE_URL="/api"
 
 # Configuración de desarrollo
