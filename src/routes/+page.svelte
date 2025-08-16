@@ -493,15 +493,20 @@
 	<header class="main-header">
 		<div class="header-content">
 			<h1 class="brand-title">Rare&Magic</h1>
-			<button class="cart-button" on:click={toggleCheckout}>
-				<ShoppingCart size={20} />
-				<!-- Debug: cartCount = {cartCount}, cart.length = {cart.length} -->
-				{#if cartCount > 0}
-					<span class="cart-count">{cartCount}</span>
-					<!-- Debug info -->
-					<!-- cartCount: {cartCount}, cart.length: {cart.length} -->
-				{/if}
-			</button>
+			<div class="header-actions">
+				<a href="/admin" class="admin-link" title="Panel Administrativo">
+					⚙️ Admin
+				</a>
+				<button class="cart-button" on:click={toggleCheckout}>
+					<ShoppingCart size={20} />
+					<!-- Debug: cartCount = {cartCount}, cart.length = {cart.length} -->
+					{#if cartCount > 0}
+						<span class="cart-count">{cartCount}</span>
+						<!-- Debug info -->
+						<!-- cartCount: {cartCount}, cart.length: {cart.length} -->
+					{/if}
+				</button>
+			</div>
 		</div>
 	</header>
 
@@ -629,6 +634,30 @@
 		justify-content: space-between;
 		max-width: 800px;
 		margin: 0 auto;
+	}
+
+	.header-actions {
+		display: flex;
+		align-items: center;
+		gap: 1rem;
+	}
+
+	.admin-link {
+		background: #f1f5f9;
+		color: #475569;
+		text-decoration: none;
+		padding: 0.5rem 1rem;
+		border-radius: 8px;
+		font-size: 0.875rem;
+		font-weight: 500;
+		transition: all 0.2s ease;
+		border: 1px solid #e2e8f0;
+	}
+
+	.admin-link:hover {
+		background: #e2e8f0;
+		color: #1e293b;
+		transform: translateY(-1px);
 	}
 
 	.brand-title {

@@ -44,6 +44,23 @@ npm run build
 npm run preview
 ```
 
+## 🎛️ **Dashboard Administrativo**
+
+Accede al panel de control completo de tu tienda:
+
+1. **Ve a tu tienda** en la ruta principal
+2. **Haz clic en "⚙️ Admin"** en el header
+3. **Gestiona productos, checkouts y más** desde una interfaz moderna
+
+### **Funcionalidades del Dashboard**
+- 📊 **Estadísticas en tiempo real** del negocio
+- 🛍️ **Gestión completa de productos** (CRUD)
+- 🛒 **Control de checkouts** y pedidos
+- 📱 **Integración WhatsApp** para comunicación
+- 🎨 **Interfaz minimalista** y responsive
+
+*Ver [ADMIN_DASHBOARD.md](./ADMIN_DASHBOARD.md) para documentación completa.*
+
 ## 🎨 **Tecnologías Utilizadas**
 
 - **Frontend**: SvelteKit + TypeScript
